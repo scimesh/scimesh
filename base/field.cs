@@ -4,9 +4,15 @@ namespace Scimesh.Base
 {
 	public abstract class Field
 	{
-		public string name;
-		public int nComponents;
-		public int dim;
+		string name;
+		int nComponents;
+		int dim;
+
+		public string Name { get { return name; } }
+
+		public int NComponents { get { return nComponents; } }
+
+		public int Dim { get { return Dim; } }
 
 		public Field (string name, int nComponents, int dim)
 		{
@@ -20,42 +26,63 @@ namespace Scimesh.Base
 
 	public class DiscreteField : Field
 	{
-		public int nValues;
-		public float?[] values;
-		public float[] coordinates;
+		int nValues;
+		float?[] values;
+		float[] coordinates;
 
-		public DiscreteField (string name, int nComponents, int dim,
-		                      int nValues,
-		                      float?[] values,
-		                      float[] coordinates
-		) : base (name, nComponents, dim)
+		public int NValues { get { return nValues; } }
+
+		protected float?[] Values { get { return values; } }
+
+		protected float[] Coordinates { get { return coordinates; } }
+
+		public DiscreteField (string name, int nComponents, int dim, int nValues, float?[] values, float[] coordinates)
+			: base (name, nComponents, dim)
 		{
+			if (nComponents * nValues != values.Length) {
+				throw new ArgumentException ("nComponents * nValues != values.Length!");
+			}
 			this.nValues = nValues;
+			this.values = values;
 			this.coordinates = coordinates;
+		}
+
+		public void ResetValues ()
+		{
+			values = new float?[NComponents * nValues];
 		}
 
 		public virtual float?[] GetValue (int valueIndex)
 		{
-			float?[] value = new float?[nComponents];
-			if (valueIndex < nValues) {
-				for (int i = 0; i < value.Length; i++) {
-					value [i] = values [valueIndex * nComponents + i];
-				}
-			} else {
-				for (int i = 0; i < value.Length; i++) {
-					value [i] = null;
-				}
+			float?[] value = new float?[NComponents];
+			int startIndex = valueIndex * NComponents;
+//			Array.Copy (values, startIndex, value, 0, value.Length);
+			for (int i = 0; i < value.Length; i++) {
+				value [i] = values [startIndex + i];
 			}
 			return value;
 		}
 
+		public virtual void SetValue (int valueIndex, float?[] value)
+		{
+			int startIndex = valueIndex * NComponents;
+//			Array.Copy (value, 0, values, startIndex, value.Length);
+			for (int i = 0; i < value.Length; i++) {
+				values [startIndex + i] = value [i];
+			}
+		}
+
 		public virtual float[] GetValueCoordinates (int valueIndex)
 		{
-			float[] coordinates = new float[dim];
-			for (int i = 0; i < coordinates.Length; i++) {
-				coordinates [i] = coordinates [valueIndex * dim + i];
-			}
-			return coordinates;
+			float[] cs = new float[Dim];
+			int startIndex = valueIndex * Dim;
+			Array.Copy (coordinates, startIndex, cs, 0, cs.Length);
+			return cs;
+		}
+
+		public float?[] this [int valueIndex] {
+			get { return GetValue (valueIndex); }
+			set { SetValue (valueIndex, value); }
 		}
 
 		// TODO implement interpolation algorithm
@@ -65,150 +92,44 @@ namespace Scimesh.Base
 		}
 	}
 
-	// TODO scalar min/max/norm to vector min/max algorithm (possibly vector length)
-	public class DiscreteSpacetimeField : DiscreteField
+	public class MeshPointField : DiscreteField
 	{
-		public int nTimeValues;
-		public int nSpaceValues;
-		public float[] times;
-		public float? minValue;
-		public float? maxValue;
+		Mesh mesh;
 
-		public DiscreteSpacetimeField (string name, int nComponents, int dim,
-		                               int nSpaceValues, 
-		                               int nTimeValues,
-		                               float?[] values,
-		                               float[] coordinates,
-		                               float[] times
-		) : base (name, nComponents, dim, nSpaceValues * nTimeValues, values, coordinates)
-		{
-			this.nSpaceValues = nSpaceValues;
-			this.nTimeValues = nTimeValues;
-			this.times = times;
-			EvaluateMaxValue ();
-			EvaluateMinValue ();
-		}
+		public Mesh Mesh { get { return mesh; } }
 
-		public virtual float?[] GetValue (int spaceValueIndex, int timeValueIndex)
+		public MeshPointField (string name, int nComponents, int nValues, float?[] values, Mesh mesh)
+			: base (name, nComponents, mesh.MaxDim, nValues, values, new float[0])
 		{
-			float?[] value = new float?[nComponents];
-			int startIndex = timeValueIndex * nSpaceValues * nComponents +
-			                 spaceValueIndex * nComponents;
-			for (int i = 0; i < value.Length; i++) {
-				value [i] = values [startIndex + i];
+			if (nValues != mesh.points.Length) {
+				throw new ArgumentException ("nValues != mesh.points.Length!");
 			}
-			return value;
-		}
-
-		public virtual float?[] GetTimeValues (int timeValueIndex)
-		{
-			float?[] values = new float?[nSpaceValues * nComponents];
-			int startIndex = timeValueIndex * nSpaceValues * nComponents;
-			for (int i = 0; i < values.Length; i++) {
-				values [i] = values [startIndex + i];
-			}
-			return values;
-		}
-
-		public void EvaluateMaxValue ()
-		{
-			maxValue = null;
-			for (int i = 0; i < values.Length; i++) {
-				if (!maxValue.HasValue) {
-					maxValue = values [i];
-				}
-				if (maxValue < values [i]) {
-					maxValue = values [i];
-				}
-			}
-		}
-
-		public void EvaluateMinValue ()
-		{
-			minValue = null;
-			for (int i = 0; i < values.Length; i++) {
-				if (!minValue.HasValue) {
-					minValue = values [i];
-				}
-				if (minValue > values [i]) {
-					minValue = values [i];
-				}
-			}
-		}
-
-		public float?[] GetNormedData ()
-		{
-			float? deltaValue = maxValue - minValue;
-			float?[] normedData = new float?[values.Length];
-			for (int i = 0; i < values.Length; i++) {
-				normedData [i] = (values [i] - minValue) / deltaValue;
-			}
-			return normedData;
-		}
-
-		public override float[] GetValueCoordinates (int valueIndex)
-		{
-			if (valueIndex > coordinates.Length) {
-				while (valueIndex > coordinates.Length) {
-					valueIndex -= coordinates.Length;
-				}
-			}
-			float[] cs = new float[dim];
-			for (int i = 0; i < cs.Length; i++) {
-				cs [i] = cs [valueIndex];
-			}
-			return cs;
-		}
-	}
-
-	public class PointField : DiscreteSpacetimeField
-	{
-		public Mesh mesh;
-
-		public PointField (string name, int nComponents, int dim,
-		                                int nTimeValues,
-		                                float?[] values,
-		                                float[] times,
-		                                Mesh mesh
-		) : base (name, nComponents, dim,
-			         mesh.points.Length, nTimeValues, values, new float[0], times)
-		{
 			this.mesh = mesh;
 		}
 
 		public override float[] GetValueCoordinates (int valueIndex)
 		{
-			if (valueIndex > mesh.points.Length) {
-				while (valueIndex > mesh.points.Length) {
-					valueIndex -= mesh.points.Length;
-				}
-			}
 			return mesh.points [valueIndex].coordinates;
 		}
 	}
 
-	public class CellField : DiscreteSpacetimeField
+	public class MeshCellField : DiscreteField
 	{
-		public Mesh mesh;
+		Mesh mesh;
 
-		public CellField (string name, int nComponents, int dim,
-		                               int nTimeValues,
-		                               float?[] values,
-		                               float[] times,
-		                               Mesh mesh
-		) : base (name, nComponents, dim, 
-			         mesh.cells.Length, nTimeValues, values, new float[0], times)
+		public Mesh Mesh { get { return mesh; } }
+
+		public MeshCellField (string name, int nComponents, int nValues, float?[] values, Mesh mesh)
+			: base (name, nComponents, mesh.MaxDim, nValues, values, new float[0])
 		{
+			if (nValues != mesh.cells.Length) {
+				throw new ArgumentException ("nValues != mesh.cells.Length!");
+			}
 			this.mesh = mesh;
 		}
 
 		public override float[] GetValueCoordinates (int valueIndex)
 		{
-			if (valueIndex > mesh.cells.Length) {
-				while (valueIndex > mesh.cells.Length) {
-					valueIndex -= mesh.cells.Length;
-				}
-			}
 			return mesh.CellCentroid (valueIndex);
 		}
 	}

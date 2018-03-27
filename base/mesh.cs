@@ -32,7 +32,7 @@ namespace Scimesh.Base
 			this.pointsIndices = pointsIndices;
 		}
 	}
-		
+
 	[Serializable]
 	public class Face
 	{
@@ -82,6 +82,13 @@ namespace Scimesh.Base
 		public Face[] faces;
 		public Cell[] cells;
 
+		int maxDim;
+		int minDim;
+
+		public int MaxDim { get { return maxDim; } }
+
+		public int MinDim {	get { return maxDim; } }
+
 		public enum Neighbours {InEdges, InFaces, InCells};
 
 		bool pointsCellsEvaluated = false;
@@ -94,14 +101,11 @@ namespace Scimesh.Base
 			this.edges = edges;
 			this.faces = faces;
 			this.cells = cells;
+			EvaluateDims ();
 		}
 
-		public Mesh (Point[] points, Face[] faces, Cell[] cells)
+		public Mesh (Point[] points, Face[] faces, Cell[] cells) : this (points, new Edge[0], faces, cells)
 		{
-			this.points = points;
-			this.edges = new Edge[0];
-			this.faces = faces;
-			this.cells = cells;
 		}
 
 		public void EvaluatePointsCells ()
@@ -254,26 +258,56 @@ namespace Scimesh.Base
 			}
 		}
 
+		void EvaluateDims ()
+		{
+			maxDim = int.MinValue;
+			minDim = int.MaxValue;
+			for (int i = 0; i < points.Length; i++) {
+				int pointDim = points [i].coordinates.Length;
+				if (maxDim < pointDim) {
+					maxDim = pointDim;
+				}
+				if (minDim > pointDim) {
+					minDim = pointDim;
+				}
+			}
+		}
+
 		public float[] CellCentroid (int cellIndex)
 		{
 			Cell cell = cells [cellIndex];
-			int dim = 0;
+			float[] centroidCs = new float[minDim]; // TODO It's safe, but ok?
 			for (int i = 0; i < cells [cellIndex].pointsIndices.Length; i++) {
-				if (dim < points [cell.pointsIndices [i]].coordinates.Length) { 
-					dim = points [cell.pointsIndices [i]].coordinates.Length;
+				float[] pointCs = points [cell.pointsIndices [i]].coordinates;
+				for (int j = 0; j < pointCs.Length; j++) {
+					centroidCs [j] += pointCs [j];
 				}
 			}
-			float[] coordinates = new float[dim];
-			for (int i = 0; i < cells [cellIndex].pointsIndices.Length; i++) {
-				float[] pointCoordinates = points [cell.pointsIndices [i]].coordinates;
-				for (int j = 0; j < pointCoordinates.Length; j++) {
-					coordinates [j] += pointCoordinates [j];
-				}
+			for (int i = 0; i < centroidCs.Length; i++) {
+				centroidCs [i] /= cell.pointsIndices.Length;
 			}
-			for (int i = 0; i < coordinates.Length; i++) {
-				coordinates [i] /= cell.pointsIndices.Length;
-			}
-			return coordinates;
+			return centroidCs;
+		}
+	}
+
+	[Serializable]
+	public class MeshFilter
+	{
+		public int[] pointsIndices;
+		public int[] edgesIndices;
+		public int[] facesIndices;
+		public int[] cellsIndices;
+
+		public MeshFilter (int[] pointsIndices, int[] edgesIndices, int[] facesIndices, int[] cellsIndices)
+		{
+			this.pointsIndices = pointsIndices;
+			this.edgesIndices = edgesIndices;
+			this.facesIndices = facesIndices;
+			this.cellsIndices = cellsIndices;
+		}
+
+		public MeshFilter (int[] cellsIndices) : this (new int[0], new int[0], new int[0], cellsIndices)
+		{
 		}
 	}
 }
