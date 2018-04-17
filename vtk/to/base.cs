@@ -19,8 +19,14 @@ namespace Scimesh.Vtk.To
 		static Base ()
 		{
 			cellTypeToTrianglesMap = new Dictionary<int, int[]> ();
-			// VTK_TRIANGLE
-			cellTypeToTrianglesMap.Add (5, new int[] {
+            // VTK_LINE TODO by line renderer?
+            cellTypeToTrianglesMap.Add(3, new int[] {              
+            });
+            // VTK_POLY_LINE TODO by line renderer?
+            cellTypeToTrianglesMap.Add(4, new int[] { 
+            });
+            // VTK_TRIANGLE
+            cellTypeToTrianglesMap.Add (5, new int[] {
 				0, 1, 2
 			});
 			// VTK_QUAD
