@@ -91,9 +91,9 @@ namespace Scimesh.Base
 
         public enum Neighbours { InEdges, InFaces, InCells };
 
-        bool pointsCellsEvaluated = false;
-        bool pointsFacesEvaluated = false;
-        bool pointsEdgesEvaluated = false;
+        public bool pointsCellsEvaluated = false;
+        public bool pointsFacesEvaluated = false;
+        public bool pointsEdgesEvaluated = false;
 
         public Mesh(Point[] points, Edge[] edges, Face[] faces, Cell[] cells)
         {
@@ -110,83 +110,74 @@ namespace Scimesh.Base
 
         public void EvaluatePointsCells()
         {
-            if (cells.Length > 0)
+            // Defining the temprorary array
+            List<List<int>> pointsCells = new List<List<int>>();
+            for (int i = 0; i < points.Length; i++)
             {
-                // Defining the temprorary array
-                List<List<int>> pointsCells = new List<List<int>>();
-                for (int i = 0; i < points.Length; i++)
-                {
-                    pointsCells.Add(new List<int>());
-                }
-                // Initializing the temprorary array
-                for (int i = 0; i < cells.Length; i++)
-                {
-                    for (int j = 0; j < cells[i].pointsIndices.Length; j++)
-                    {
-                        pointsCells[cells[i].pointsIndices[j]].Add(i);
-                    }
-                }
-                // Writing the temprorary array to the mesh points cellsIndices arrays
-                for (int i = 0; i < points.Length; i++)
-                {
-                    points[i].cellsIndices = pointsCells[i].ToArray();
-                }
-                pointsCellsEvaluated = true;
+                pointsCells.Add(new List<int>());
             }
+            // Initializing the temprorary array
+            for (int i = 0; i < cells.Length; i++)
+            {
+                for (int j = 0; j < cells[i].pointsIndices.Length; j++)
+                {
+                    pointsCells[cells[i].pointsIndices[j]].Add(i);
+                }
+            }
+            // Writing the temprorary array to the mesh points cellsIndices arrays
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i].cellsIndices = pointsCells[i].ToArray();
+            }
+            pointsCellsEvaluated = true;
         }
 
         public void EvaluatePointsFaces()
         {
-            if (faces.Length > 0)
+            // Defining the temprorary array
+            List<List<int>> pointsFaces = new List<List<int>>();
+            for (int i = 0; i < points.Length; i++)
             {
-                // Defining the temprorary array
-                List<List<int>> pointsFaces = new List<List<int>>();
-                for (int i = 0; i < points.Length; i++)
-                {
-                    pointsFaces.Add(new List<int>());
-                }
-                // Initializing the temprorary array
-                for (int i = 0; i < faces.Length; i++)
-                {
-                    for (int j = 0; j < faces[i].pointsIndices.Length; j++)
-                    {
-                        pointsFaces[faces[i].pointsIndices[j]].Add(i);
-                    }
-                }
-                // Assigning the temprorary array to the mesh points facesIndices arrays
-                for (int i = 0; i < points.Length; i++)
-                {
-                    points[i].facesIndices = pointsFaces[i].ToArray();
-                }
-                pointsFacesEvaluated = true;
+                pointsFaces.Add(new List<int>());
             }
+            // Initializing the temprorary array
+            for (int i = 0; i < faces.Length; i++)
+            {
+                for (int j = 0; j < faces[i].pointsIndices.Length; j++)
+                {
+                    pointsFaces[faces[i].pointsIndices[j]].Add(i);
+                }
+            }
+            // Assigning the temprorary array to the mesh points facesIndices arrays
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i].facesIndices = pointsFaces[i].ToArray();
+            }
+            pointsFacesEvaluated = true;
         }
 
         public void EvaluatePointsEdges()
         {
-            if (edges.Length > 0)
+            // Defining the temprorary array
+            List<List<int>> pointsEdges = new List<List<int>>();
+            for (int i = 0; i < points.Length; i++)
             {
-                // Defining the temprorary array
-                List<List<int>> pointsEdges = new List<List<int>>();
-                for (int i = 0; i < points.Length; i++)
-                {
-                    pointsEdges.Add(new List<int>());
-                }
-                // Initializing the temprorary array
-                for (int i = 0; i < edges.Length; i++)
-                {
-                    for (int j = 0; j < edges[i].pointsIndices.Length; j++)
-                    {
-                        pointsEdges[edges[i].pointsIndices[j]].Add(i);
-                    }
-                }
-                // Assigning the temprorary array to the mesh points edgesIndices arrays
-                for (int i = 0; i < points.Length; i++)
-                {
-                    points[i].edgesIndices = pointsEdges[i].ToArray();
-                }
-                pointsEdgesEvaluated = true;
+                pointsEdges.Add(new List<int>());
             }
+            // Initializing the temprorary array
+            for (int i = 0; i < edges.Length; i++)
+            {
+                for (int j = 0; j < edges[i].pointsIndices.Length; j++)
+                {
+                    pointsEdges[edges[i].pointsIndices[j]].Add(i);
+                }
+            }
+            // Assigning the temprorary array to the mesh points edgesIndices arrays
+            for (int i = 0; i < points.Length; i++)
+            {
+                points[i].edgesIndices = pointsEdges[i].ToArray();
+            }
+            pointsEdgesEvaluated = true;
         }
 
         public void EvaluatePointsNeighbourPoints(Neighbours type)
@@ -351,47 +342,5 @@ namespace Scimesh.Base
         public MeshFilter(int[] cellsIndices) : this(new int[0], new int[0], new int[0], cellsIndices)
         {
         }
-
-        /// <summary>
-		/// </summary>
-        public static readonly Func<Mesh, MeshFilter> boundaryCells = (m) =>
-        {
-            HashSet<int> cellsIndicesHash = new HashSet<int>();
-            for (int i = 0; i < m.faces.Length; i++)
-            {
-                cellsIndicesHash.Add(i);
-            }
-            for (int i = 0; i < m.cells.Length; i++)
-            {
-                Cell c = m.cells[i];
-                Cell[] nc = new Cell[c.neighbourCellsIndices.Length];
-                for (int j = 0; j < c.neighbourCellsIndices.Length; j++)
-                {
-                    nc[j] = m.cells[c.neighbourCellsIndices[j]];
-                }
-                List<int[]> ncfps = new List<int[]>();
-                for (int j = 0; j < nc.Length; j++)
-                {
-                    for (int k = 0; k < nc[j].facesIndices.Length; k++)
-                    {
-                        ncfps.Add(m.faces[nc[j].facesIndices[k]].pointsIndices);
-                    }
-                }
-                for (int j = 0; j < c.facesIndices.Length; j++)
-                {
-                    int[] fps = m.faces[c.facesIndices[j]].pointsIndices;
-                    for (int k = 0; k < ncfps.Count; k++)
-                    {
-                        if (fps.Length == ncfps[j].Length)
-                        {
-
-                        }
-                    }
-                }
-            }
-            int[] cellsIndices = new int[cellsIndicesHash.Count];
-            cellsIndicesHash.CopyTo(cellsIndices);
-            return new MeshFilter(new int[0], new int[0], new int[0], cellsIndices);
-        };
     }
 }
