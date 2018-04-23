@@ -10,9 +10,13 @@ public class ActivizToUnityEditor : Editor
 
         ActivizToUnity myScript = (ActivizToUnity)target;
 
-        if (GUILayout.Button("Activiz to Unity"))
+        if (GUILayout.Button("Polydata to Unity"))
         {
-            myScript.ActivizToMesh();
+            myScript.PolydataToUnity();
+        }
+        if (GUILayout.Button("XmlMultiBlockData to Unity"))
+        {
+            myScript.XmlMultiBlockDataToUnity();
         }
     }
 }
