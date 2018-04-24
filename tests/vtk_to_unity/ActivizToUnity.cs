@@ -97,53 +97,53 @@ public class ActivizToUnity : MonoBehaviour
         mfs = new Scimesh.Base.MeshFilter[ms.Length];
         stopwatch.Stop();
         UnityEngine.Debug.Log(string.Format("Elapsed time: {0:E0} ms, {1:E0} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-        //for (int i = 0; i < ms.Length; i++)
-        //{
-        //    // Serialize Scimesh
-        //    stopwatch = Stopwatch.StartNew();
-        //    long size = 0;
-        //    using (Stream stream = new MemoryStream())
-        //    {
-        //        BinaryFormatter formatter = new BinaryFormatter();
-        //        formatter.Serialize(stream, ms[i]);
-        //        size = stream.Length;
-        //    }
-        //    stopwatch.Stop();
-        //    UnityEngine.Debug.Log("Scimesh size: " + size.ToString() + " bytes");
-        //    UnityEngine.Debug.Log("Scimesh serializing time: " + stopwatch.ElapsedMilliseconds);
-        //    // Scimesh procedures
-        //    stopwatch = Stopwatch.StartNew();
-        //    ms[i].EvaluateCellsNeighbourCells();
-        //    stopwatch.Stop();
-        //    UnityEngine.Debug.Log("EvaluateCellsNeighbourCells time: " + stopwatch.ElapsedMilliseconds + " ms");
-        //    stopwatch = Stopwatch.StartNew();
-        //    ms[i].EvaluatePointsNeighbourPoints(Scimesh.Base.Mesh.Neighbours.InFaces);
-        //    stopwatch.Stop();
-        //    UnityEngine.Debug.Log("EvaluatePointsNeighbourPoints time: " + stopwatch.ElapsedMilliseconds + " ms");
-        //    // Set Scimesh MeshFilter
-        //    stopwatch = Stopwatch.StartNew();
-        //    int[] cellIndices = new int[ms[i].cells.Length];
-        //    for (int j = 0; j < cellIndices.Length; j++)
-        //    {
-        //        cellIndices[j] = j;
-        //    }
-        //    mfs[i] = new Scimesh.Base.MeshFilter(cellIndices);
-        //    stopwatch.Stop();
-        //    UnityEngine.Debug.Log("Scimesh to UnityMesh " + stopwatch.ElapsedMilliseconds + " ms");
-        //    // Scimesh to UnityMesh
-        //    stopwatch = Stopwatch.StartNew();
-        //    Mesh[] unityMeshes = Scimesh.Base.To.Unity.MeshToUnityMesh(ms[i], mfs[i]);
-        //    for (int j = 0; j < unityMeshes.Length; j++)
-        //    {
-        //        GameObject childMesh = new GameObject();
-        //        childMesh.transform.parent = gameObject.transform;
-        //        MeshFilter meshFilter = childMesh.AddComponent<MeshFilter>();
-        //        meshFilter.sharedMesh = unityMeshes[j];
-        //        MeshRenderer meshRenderer = childMesh.AddComponent<MeshRenderer>();
-        //        meshRenderer.material = mat;
-        //    }
-        //    stopwatch.Stop();
-        //    UnityEngine.Debug.Log("Scimesh to UnityMesh " + stopwatch.ElapsedMilliseconds + " ms");
-        //}
+        for (int i = 0; i < ms.Length; i++)
+        {
+            // Serialize Scimesh
+            stopwatch = Stopwatch.StartNew();
+            long size = 0;
+            using (Stream stream = new MemoryStream())
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                formatter.Serialize(stream, ms[i]);
+                size = stream.Length;
+            }
+            stopwatch.Stop();
+            UnityEngine.Debug.Log("Scimesh size: " + size.ToString() + " bytes");
+            UnityEngine.Debug.Log("Scimesh serializing time: " + stopwatch.ElapsedMilliseconds);
+            // Scimesh procedures
+            stopwatch = Stopwatch.StartNew();
+            ms[i].EvaluateCellsNeighbourCells();
+            stopwatch.Stop();
+            UnityEngine.Debug.Log("EvaluateCellsNeighbourCells time: " + stopwatch.ElapsedMilliseconds + " ms");
+            stopwatch = Stopwatch.StartNew();
+            ms[i].EvaluatePointsNeighbourPoints(Scimesh.Base.Mesh.Neighbours.InFaces);
+            stopwatch.Stop();
+            UnityEngine.Debug.Log("EvaluatePointsNeighbourPoints time: " + stopwatch.ElapsedMilliseconds + " ms");
+            // Set Scimesh MeshFilter
+            stopwatch = Stopwatch.StartNew();
+            int[] cellIndices = new int[ms[i].cells.Length];
+            for (int j = 0; j < cellIndices.Length; j++)
+            {
+                cellIndices[j] = j;
+            }
+            mfs[i] = new Scimesh.Base.MeshFilter(cellIndices);
+            stopwatch.Stop();
+            UnityEngine.Debug.Log("Scimesh to UnityMesh " + stopwatch.ElapsedMilliseconds + " ms");
+            // Scimesh to UnityMesh
+            stopwatch = Stopwatch.StartNew();
+            Mesh[] unityMeshes = Scimesh.Base.To.Unity.MeshToUnityMesh(ms[i], mfs[i]);
+            for (int j = 0; j < unityMeshes.Length; j++)
+            {
+                GameObject childMesh = new GameObject();
+                childMesh.transform.parent = gameObject.transform;
+                MeshFilter meshFilter = childMesh.AddComponent<MeshFilter>();
+                meshFilter.sharedMesh = unityMeshes[j];
+                MeshRenderer meshRenderer = childMesh.AddComponent<MeshRenderer>();
+                meshRenderer.material = mat;
+            }
+            stopwatch.Stop();
+            UnityEngine.Debug.Log("Scimesh to UnityMesh " + stopwatch.ElapsedMilliseconds + " ms");
+        }
     }
 }
