@@ -10,6 +10,10 @@ public class ActivizToUnityEditor : Editor
 
         ActivizToUnity myScript = (ActivizToUnity)target;
 
+        if (GUILayout.Button("Clear"))
+        {
+            myScript.Clear();
+        }
         if (GUILayout.Button("Polydata to Unity"))
         {
             myScript.PolydataToUnity();

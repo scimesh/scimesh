@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using UnityEngine;
 
 public class BaseToUnity : MonoBehaviour
@@ -8,30 +6,24 @@ public class BaseToUnity : MonoBehaviour
     public Material mat;
     public int meshPointFieldType;
 
-    // Use this for initialization
-    void Start()
+    public void Clear()
     {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        UnityEngine.Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            GameObject.DestroyImmediate(transform.GetChild(i).gameObject);
+        }
+        stopwatch.Stop();
+        UnityEngine.Debug.Log(string.Format("Clearing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
     }
 
     public void TestMeshPointFieldToUnity()
     {
-        // Clear
-        Stopwatch stopwatch = Stopwatch.StartNew();
-        foreach (Transform child in transform)
-        {
-            GameObject.DestroyImmediate(child.gameObject);
-        }
-        stopwatch.Stop();
-        UnityEngine.Debug.Log("Clear " + stopwatch.ElapsedMilliseconds + " ms");
+        UnityEngine.Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
+        Clear();
         // Create MeshPointField
-        stopwatch = Stopwatch.StartNew();
+        Stopwatch stopwatch = Stopwatch.StartNew();
         Scimesh.Base.MeshPointField mpf = Scimesh.Base.To.Base.testMeshPointField(meshPointFieldType);
         //UnityEngine.Debug.Log(mpf.MaxValueIndex);
         //UnityEngine.Debug.Log(mpf.MinValueIndex);
@@ -53,8 +45,14 @@ public class BaseToUnity : MonoBehaviour
         stopwatch = Stopwatch.StartNew();
         Mesh[] ms = Scimesh.Base.To.Unity.MeshPointFieldToUnityMesh(
             mpf,
-            Scimesh.Base.To.Base.allFacesMeshFilter(mpf.Mesh),
+            Scimesh.Base.To.Base.boundaryFacesMeshFilter2(mpf.Mesh),
+            //Scimesh.Base.To.Base.boundaryFacesMeshFilter(mpf.Mesh),
+            //Scimesh.Base.To.Base.allFacesMeshFilter(mpf.Mesh),
             Scimesh.Color.Colormaps.dictionary[Scimesh.Color.Colormaps.Name.RainbowAlphaBlendedTransparent]);
+        stopwatch.Stop();
+        UnityEngine.Debug.Log("Scimesh to UnityMesh " + stopwatch.ElapsedMilliseconds + " ms");
+        // Scimesh Unity
+        stopwatch = Stopwatch.StartNew();
         for (int i = 0; i < ms.Length; i++)
         {
             GameObject childMesh = new GameObject();
@@ -65,6 +63,6 @@ public class BaseToUnity : MonoBehaviour
             meshRenderer.material = mat;
         }
         stopwatch.Stop();
-        UnityEngine.Debug.Log("Scimesh to UnityMesh " + stopwatch.ElapsedMilliseconds + " ms");
+        UnityEngine.Debug.Log("Unity " + stopwatch.ElapsedMilliseconds + " ms");
     }
 }

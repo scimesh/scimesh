@@ -13,7 +13,7 @@ namespace Scimesh.Base.To
         /// <summary>
         /// Unity restriction on max vertices in the mesh.
         /// </summary>
-        public const int MAX_MESH_VERTICES = 65534;
+        public const int MAX_MESH_VERTICES = 65534; // 21844 separated (with no shared vertices) triangles
 
         public static readonly Func<Mesh, MeshFilter, UnityEngine.Mesh[]> MeshToUnityMesh = (m, mf) =>
         {

@@ -198,7 +198,10 @@ namespace Scimesh.Base.To
         };
 
         /// <summary>
-        /// Mesh filter that return only boundary faces
+        /// Mesh filter that return only boundary faces (FIXME very slow - SLUGGISH...)
+        /// Complexity grows by ~ k^2*n^2, k - number of faces points, n - number of faces
+        /// n = 10k quadrangle faces time ~ 8s
+        /// n = 90k quadrangle faces time ~ 660s
 		/// </summary>
         public static readonly Func<Mesh, MeshFilter> boundaryFacesMeshFilter = (m) =>
         {
@@ -217,14 +220,16 @@ namespace Scimesh.Base.To
                     bool haveOppositeFace = false;
                     foreach (int hashFaceIndex in hashFacesIndices)
                     {
-                        haveOppositeFace = true;
                         int[] hashFacePointsIndices = m.faces[hashFaceIndex].pointsIndices;
-                        foreach (int pointIndex in facePointsIndices)
+                        haveOppositeFace = true;
+                        for (int j = 0; j < facePointsIndices.Length; j++)
                         {
+                            int facePoint = facePointsIndices[j];
                             bool haveOppositePoint = false;
-                            foreach (int hashPointIndex in hashFacePointsIndices)
+                            for (int k = 0; k < hashFacePointsIndices.Length; k++)
                             {
-                                if (pointIndex == hashPointIndex)
+                                int hashPoint = hashFacePointsIndices[k];
+                                if (facePoint == hashPoint)
                                 {
                                     haveOppositePoint = true;
                                     break;
@@ -239,6 +244,68 @@ namespace Scimesh.Base.To
                         if (haveOppositeFace)
                         {
                             hashFacesIndices.Remove(hashFaceIndex);
+                            break;
+                        }
+                    }
+                    if (!haveOppositeFace)
+                    {
+                        facesIndices.Add(i);
+                    }
+                }
+            }
+            return new MeshFilter(new int[0], new int[0], facesIndices.ToArray(), new int[0]);
+        };
+
+        /// <summary>
+        /// Mesh filter that return only boundary faces through face neighbour faces
+        /// Complexity grows by ~ k^2*n, k - number of faces points, n - number of faces
+        /// n = 10k quadrangle faces time ~ 0.13s
+        /// n = 90k quadrangle faces time ~ 1.30s
+        /// n = 250k quadrangle faces time ~ 3.80s
+		/// </summary>
+        public static readonly Func<Mesh, MeshFilter> boundaryFacesMeshFilter2 = (m) =>
+        {
+            m.EvaluateFacesNeighbourFaces();
+            List<int> facesIndices = new List<int>(); // Faces indices to MeshFilter
+            HashSet<int> hashFacesIndices = new HashSet<int>();  // Temporary HashSet for faces indices
+            for (int i = 0; i < m.faces.Length; i++)
+            {
+                hashFacesIndices.Add(i);
+            }
+            for (int i = 0; i < m.faces.Length; i++)
+            {
+                if (hashFacesIndices.Contains(i))
+                {
+                    hashFacesIndices.Remove(i);
+                    int[] facePointsIndices = m.faces[i].pointsIndices;
+                    bool haveOppositeFace = false;
+                    int[] neighbourFacesIndices = m.faces[i].neighbourFacesIndices;
+                    for (int n = 0; n < neighbourFacesIndices.Length; n++)
+                    {
+                        int[] neighbourFacePointsIndices = m.faces[neighbourFacesIndices[n]].pointsIndices;
+                        haveOppositeFace = true;
+                        for (int j = 0; j < facePointsIndices.Length; j++)
+                        {
+                            int facePoint = facePointsIndices[j];
+                            bool haveOppositePoint = false;
+                            for (int k = 0; k < neighbourFacePointsIndices.Length; k++)
+                            {
+                                int neighbourPoint = neighbourFacePointsIndices[k];
+                                if (facePoint == neighbourPoint)
+                                {
+                                    haveOppositePoint = true;
+                                    break;
+                                }
+                            }
+                            if (!haveOppositePoint)
+                            {
+                                haveOppositeFace = false;
+                                break;
+                            }
+                        }
+                        if (haveOppositeFace)
+                        {
+                            hashFacesIndices.Remove(m.faces[i].neighbourFacesIndices[n]);
                             break;
                         }
                     }
@@ -280,6 +347,7 @@ namespace Scimesh.Base.To
         /// <summary>
         /// Create test Mesh by type
         /// 0 - cube with 2 internal diagonals for boundary mesh filter testing
+        /// 1 - quadrangle ribbon for boundary mesh filter testing
         /// else - empty mesh
 		/// </summary>
         public static readonly Func<int, Mesh> testMesh = (type) =>
@@ -308,6 +376,49 @@ namespace Scimesh.Base.To
                 Cell[] cells = new Cell[0];
                 return new Mesh(points, edges, faces, cells);
             }
+            else if (type == 1)
+            {
+                int nFaces = 50;
+                float dx = 1;
+                float z = 1;
+                List<Point> ps = new List<Point>();
+                List<Face> fs = new List<Face>();
+                for (int i = 0; i < nFaces; i++)
+                {
+                    ps.Add(new Point(new float[] { (i + 1) * dx, 0f, z }));
+                    ps.Add(new Point(new float[] { (i + 1) * dx, 0f, 0f }));
+                    ps.Add(new Point(new float[] { i * dx, 0f, 0f }));
+                    ps.Add(new Point(new float[] { i * dx, 0f, z }));
+                    fs.Add(new Face(new int[] { i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3 }));
+                }
+                Edge[] edges = new Edge[0];
+                Cell[] cells = new Cell[0];
+                return new Mesh(ps.ToArray(), edges, fs.ToArray(), cells);
+            }
+            else if (type == 2)
+            {
+                int nFacesX = 500;
+                int nFacesZ = 500;
+                float dx = 1;
+                float dz = 1;
+                List<Point> ps = new List<Point>();
+                List<Face> fs = new List<Face>();
+                for (int i = 0; i < nFacesX; i++)
+                {
+                    for (int j = 0; j < nFacesZ; j++)
+                    {
+                        ps.Add(new Point(new float[] { (i + 1) * dx, 0f, (j + 1) * dz }));
+                        ps.Add(new Point(new float[] { (i + 1) * dx, 0f, j * dz }));
+                        ps.Add(new Point(new float[] { i * dx, 0f, j * dz }));
+                        ps.Add(new Point(new float[] { i * dx, 0f, (j + 1) * dz }));
+                        int startPoint = i * 4 * nFacesZ + j * 4;
+                        fs.Add(new Face(new int[] { startPoint, startPoint + 1, startPoint + 2, startPoint + 3 }));
+                    }
+                }
+                Edge[] edges = new Edge[0];
+                Cell[] cells = new Cell[0];
+                return new Mesh(ps.ToArray(), edges, fs.ToArray(), cells);
+            }
             else
             {
                 Point[] points = new Point[0];
@@ -322,6 +433,8 @@ namespace Scimesh.Base.To
         /// Create test MeshPointField by type
         /// 0 - cube with 2 internal diagonals and scalar field
         /// 1 - cube with 2 internal diagonals and 3D vector field
+        /// 2 - quadrangle ribbon with scalar field
+        /// 3 - quadrangle plane with scalar field
         /// else - type = 0
 		/// </summary>
         public static readonly Func<int, MeshPointField> testMeshPointField = (type) =>
@@ -341,6 +454,28 @@ namespace Scimesh.Base.To
             {
                 Mesh mesh = testMesh(0);
                 int nComponents = 3;
+                float?[] values = new float?[mesh.points.Length * nComponents];
+                for (int i = 0; i < values.Length; i++)
+                {
+                    values[i] = (float)i;
+                }
+                return new MeshPointField("Test", nComponents, values, mesh);
+            }
+            else if (type == 2)
+            {
+                Mesh mesh = testMesh(1);
+                int nComponents = 1;
+                float?[] values = new float?[mesh.points.Length * nComponents];
+                for (int i = 0; i < values.Length; i++)
+                {
+                    values[i] = (float)i;
+                }
+                return new MeshPointField("Test", nComponents, values, mesh);
+            }
+            else if (type == 3)
+            {
+                Mesh mesh = testMesh(2);
+                int nComponents = 1;
                 float?[] values = new float?[mesh.points.Length * nComponents];
                 for (int i = 0; i < values.Length; i++)
                 {

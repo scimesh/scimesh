@@ -38,11 +38,13 @@ namespace Scimesh.Base
     {
         public int[] pointsIndices;
         public int[] edgesIndices;
+        public int[] neighbourFacesIndices;
 
         public Face(int[] pointsIndices, int[] edgesIndices)
         {
             this.pointsIndices = pointsIndices;
             this.edgesIndices = edgesIndices;
+            this.neighbourFacesIndices = new int[0];
         }
 
         public Face(int[] pointsIndices)
@@ -177,7 +179,7 @@ namespace Scimesh.Base
         {
             if (type == Neighbours.InEdges && edges.Length > 0)
             { // Neighbours in the edges
-              // PointsEdges arrays are needed for an efficient algorithm
+              // PointsEdges arrays have to an efficient algorithm
                 if (!pointsEdgesEvaluated)
                 {
                     EvaluatePointsEdges();
@@ -202,7 +204,7 @@ namespace Scimesh.Base
             }
             else if (type == Neighbours.InFaces && faces.Length > 0)
             { // Neighbours in the faces
-              // PointsFaces arrays are needed for an efficient algorithm
+              // PointsFaces arrays have to for an efficient algorithm
                 if (!pointsEdgesEvaluated)
                 {
                     EvaluatePointsFaces();
@@ -227,7 +229,7 @@ namespace Scimesh.Base
             }
             else if (type == Neighbours.InCells && cells.Length > 0)
             { // Neighbours in the cells
-              // PointsCells arrays are needed for an efficient algorithm
+              // PointsCells arrays have to for an efficient algorithm
                 if (!pointsCellsEvaluated)
                 {
                     EvaluatePointsCells();
@@ -275,6 +277,32 @@ namespace Scimesh.Base
                                         // Converting HashSet to array int[] and assign it to cells neighbourCellsIndices array
                 cells[i].neighbourCellsIndices = new int[cellsIndices.Count];
                 cellsIndices.CopyTo(cells[i].neighbourCellsIndices);
+            }
+        }
+
+        public void EvaluateFacesNeighbourFaces()
+        {
+            // PointsFaces arrays are needed for an efficient algorithm
+            if (!pointsFacesEvaluated)
+            {
+                EvaluatePointsFaces();
+            }
+            // For each face
+            for (int i = 0; i < faces.Length; i++)
+            {
+                // Using HashSet to create unique value list
+                HashSet<int> facesIndices = new HashSet<int>();
+                for (int j = 0; j < faces[i].pointsIndices.Length; j++)
+                {
+                    for (int k = 0; k < points[faces[i].pointsIndices[j]].facesIndices.Length; k++)
+                    {
+                        facesIndices.Add(points[faces[i].pointsIndices[j]].facesIndices[k]);
+                    }
+                }
+                facesIndices.Remove(i); // Remove itself
+                // Converting HashSet to array int[] and assign it to cells neighbourFacesIndices array
+                faces[i].neighbourFacesIndices = new int[facesIndices.Count];
+                facesIndices.CopyTo(faces[i].neighbourFacesIndices);
             }
         }
 

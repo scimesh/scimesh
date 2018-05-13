@@ -10,6 +10,11 @@ public class BaseToUnityEditor : Editor
 
         BaseToUnity myScript = (BaseToUnity)target;
 
+        if (GUILayout.Button("Clear"))
+        {
+            myScript.Clear();
+        }
+
         if (GUILayout.Button("TestMeshPointField to Unity"))
         {
             myScript.TestMeshPointFieldToUnity();

@@ -18,8 +18,7 @@ namespace Scimesh.Third.Activiz.To
             reader.SetFileName(absPath);
             reader.Update();
             stopwatch.Stop();
-            UnityEngine.Debug.Log(string.Format("Elapsed time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-            UnityEngine.Debug.Log("Initializing");
+            UnityEngine.Debug.Log(string.Format("Reading time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             stopwatch = Stopwatch.StartNew();
             vtkPolyData polyData = reader.GetOutput();
             stopwatch.Stop();
@@ -32,7 +31,6 @@ namespace Scimesh.Third.Activiz.To
             UnityEngine.Debug.Log(string.Format("Number of stripts: {0}", polyData.GetNumberOfStrips()));
             UnityEngine.Debug.Log(string.Format("Number of vertices: {0}", polyData.GetNumberOfVerts()));
             UnityEngine.Debug.Log("Scimesh");
-            UnityEngine.Debug.Log("Importing Points");
             stopwatch = Stopwatch.StartNew();
             Scimesh.Base.Point[] points = new Scimesh.Base.Point[polyData.GetNumberOfPoints()];
             for (int i = 0; i < polyData.GetNumberOfPoints(); i++)
@@ -41,8 +39,7 @@ namespace Scimesh.Third.Activiz.To
                 points[i] = new Scimesh.Base.Point(new float[] { (float)cs[0], (float)cs[2], (float)cs[1] });
             }
             stopwatch.Stop();
-            UnityEngine.Debug.Log(string.Format("Elapsed time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-            UnityEngine.Debug.Log("Importing Cells");
+            UnityEngine.Debug.Log(string.Format("Points importing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             stopwatch = Stopwatch.StartNew();
             Scimesh.Base.Cell[] cells = new Scimesh.Base.Cell[polyData.GetNumberOfCells()];
             int[] cellTypes = new int[polyData.GetNumberOfCells()];
@@ -58,8 +55,7 @@ namespace Scimesh.Third.Activiz.To
                 cellTypes[i] = cell.GetCellType();
             }
             stopwatch.Stop();
-            UnityEngine.Debug.Log(string.Format("Elapsed time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-            UnityEngine.Debug.Log("Creating Faces");
+            UnityEngine.Debug.Log(string.Format("Cells importing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             stopwatch = Stopwatch.StartNew();
             List<Scimesh.Base.Face> faces = new List<Scimesh.Base.Face>();
             for (int i = 0; i < cellTypes.Length; i++)
@@ -80,7 +76,7 @@ namespace Scimesh.Third.Activiz.To
                 }
             }
             stopwatch.Stop();
-            UnityEngine.Debug.Log(string.Format("Elapsed time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
+            UnityEngine.Debug.Log(string.Format("Faces creating time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             UnityEngine.Debug.Log(string.Format("Number of scimesh points: {0}", points.Length));
             UnityEngine.Debug.Log(string.Format("Number of scimesh faces: {0}", faces.Count));
             UnityEngine.Debug.Log(string.Format("Number of scimesh cells: {0}", cells.Length));
@@ -97,12 +93,11 @@ namespace Scimesh.Third.Activiz.To
             reader.Update();
             //reader.UpdateInformation();
             stopwatch.Stop();
-            UnityEngine.Debug.Log(string.Format("Elapsed time: {0:E0} ms, {1:E0} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-            UnityEngine.Debug.Log("Initializing");
+            UnityEngine.Debug.Log(string.Format("Reading time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             stopwatch = Stopwatch.StartNew();
             vtkMultiBlockDataSet multiBlock = vtkMultiBlockDataSet.SafeDownCast(reader.GetOutput());
             stopwatch.Stop();
-            UnityEngine.Debug.Log(string.Format("Elapsed time: {0:E0} ms, {1:E0} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
+            UnityEngine.Debug.Log(string.Format("Initializing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             //multiBlock.Update();
             //multiBlock.UpdateData();
             //multiBlock.UpdateInformation();
@@ -127,7 +122,6 @@ namespace Scimesh.Third.Activiz.To
                 UnityEngine.Debug.Log(string.Format("Number of cells: {0}", ug.GetNumberOfCells()));
                 UnityEngine.Debug.Log(string.Format("Number of pieces: {0}", ug.GetNumberOfPieces()));
                 UnityEngine.Debug.Log("Scimesh");
-                UnityEngine.Debug.Log("Importing Points");
                 stopwatch = Stopwatch.StartNew();
                 Scimesh.Base.Point[] points = new Scimesh.Base.Point[ug.GetNumberOfPoints()];
                 for (int j = 0; j < ug.GetNumberOfPoints(); j++)
@@ -136,9 +130,7 @@ namespace Scimesh.Third.Activiz.To
                     points[j] = new Scimesh.Base.Point(new float[] { (float)cs[0], (float)cs[2], (float)cs[1] });
                 }
                 stopwatch.Stop();
-                UnityEngine.Debug.Log(string.Format(
-                    "Elapsed time: {0:E0} ms, {1:E0} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-                UnityEngine.Debug.Log("Importing Cells");
+                UnityEngine.Debug.Log(string.Format("Points importing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
                 stopwatch = Stopwatch.StartNew();
                 Scimesh.Base.Cell[] cells = new Scimesh.Base.Cell[ug.GetNumberOfCells()];
                 int[] cellTypes = new int[ug.GetNumberOfCells()];
@@ -154,9 +146,7 @@ namespace Scimesh.Third.Activiz.To
                     cellTypes[j] = cell.GetCellType();
                 }
                 stopwatch.Stop();
-                UnityEngine.Debug.Log(string.Format(
-                    "Elapsed time: {0:E0} ms, {1:E0} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-                UnityEngine.Debug.Log("Creating Faces");
+                UnityEngine.Debug.Log(string.Format("Cells importing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
                 stopwatch = Stopwatch.StartNew();
                 List<Scimesh.Base.Face> faces = new List<Scimesh.Base.Face>();
                 for (int j = 0; j < cellTypes.Length; j++)
@@ -177,11 +167,10 @@ namespace Scimesh.Third.Activiz.To
                     }
                 }
                 stopwatch.Stop();
-                UnityEngine.Debug.Log(string.Format(
-                    "Elapsed time: {0:E0} ms, {1:E0} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-                UnityEngine.Debug.Log(points.Length);
-                UnityEngine.Debug.Log(faces.Count);
-                UnityEngine.Debug.Log(cells.Length);
+                UnityEngine.Debug.Log(string.Format("Faces creating time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
+                UnityEngine.Debug.Log(string.Format("Number of scimesh points: {0}", points.Length));
+                UnityEngine.Debug.Log(string.Format("Number of scimesh faces: {0}", faces.Count));
+                UnityEngine.Debug.Log(string.Format("Number of scimesh cells: {0}", cells.Length));
                 Scimesh.Base.Mesh mesh = new Scimesh.Base.Mesh(points, faces.ToArray(), cells);
                 meshes[i] = mesh;
             }
