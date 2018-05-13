@@ -497,7 +497,7 @@ namespace Scimesh.Vtk.To
 			List<Scimesh.Base.MeshPointField> pointFields = new List<Scimesh.Base.MeshPointField> ();
 			for (int i = 0; i < fieldsNames.Count; i++) {
 				pointFields.Add (new Scimesh.Base.MeshPointField (
-					fieldsNames [i], fieldsNComponents [i], fieldsData [i].Count, fieldsData [i].ToArray (), m));
+					fieldsNames [i], fieldsNComponents [i], fieldsData [i].ToArray (), m));
 			}
 			return pointFields;
 		};
@@ -558,7 +558,7 @@ namespace Scimesh.Vtk.To
 			List<Scimesh.Base.MeshCellField> cellFields = new List<Scimesh.Base.MeshCellField> ();
 			for (int i = 0; i < fieldsNames.Count; i++) {
 				cellFields.Add (new Scimesh.Base.MeshCellField (
-					fieldsNames [i], fieldsNComponents [i], fieldsData [i].Count, fieldsData [i].ToArray (), m));
+					fieldsNames [i], fieldsNComponents [i], fieldsData [i].ToArray (), m));
 			}
 			return cellFields;
 		};

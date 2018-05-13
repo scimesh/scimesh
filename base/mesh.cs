@@ -81,16 +81,9 @@ namespace Scimesh.Base
         public Edge[] edges;
         public Face[] faces;
         public Cell[] cells;
-
-        int maxDim;
-        int minDim;
-
-        public int MaxDim { get { return maxDim; } }
-
-        public int MinDim { get { return maxDim; } }
-
+        public int MaxDim { get; private set; }
+        public int MinDim { get; private set; }
         public enum Neighbours { InEdges, InFaces, InCells };
-
         public bool pointsCellsEvaluated = false;
         public bool pointsFacesEvaluated = false;
         public bool pointsEdgesEvaluated = false;
@@ -287,18 +280,18 @@ namespace Scimesh.Base
 
         void EvaluateDims()
         {
-            maxDim = int.MinValue;
-            minDim = int.MaxValue;
+            MaxDim = int.MinValue;
+            MinDim = int.MaxValue;
             for (int i = 0; i < points.Length; i++)
             {
                 int pointDim = points[i].coordinates.Length;
-                if (maxDim < pointDim)
+                if (MaxDim < pointDim)
                 {
-                    maxDim = pointDim;
+                    MaxDim = pointDim;
                 }
-                if (minDim > pointDim)
+                if (MinDim > pointDim)
                 {
-                    minDim = pointDim;
+                    MinDim = pointDim;
                 }
             }
         }
@@ -306,7 +299,7 @@ namespace Scimesh.Base
         public float[] CellCentroid(int cellIndex)
         {
             Cell cell = cells[cellIndex];
-            float[] centroidCs = new float[minDim]; // TODO It's safe, but ok?
+            float[] centroidCs = new float[MinDim]; // TODO It's safe, but ok?
             for (int i = 0; i < cells[cellIndex].pointsIndices.Length; i++)
             {
                 float[] pointCs = points[cell.pointsIndices[i]].coordinates;
@@ -337,10 +330,6 @@ namespace Scimesh.Base
             this.edgesIndices = edgesIndices;
             this.facesIndices = facesIndices;
             this.cellsIndices = cellsIndices;
-        }
-
-        public MeshFilter(int[] cellsIndices) : this(new int[0], new int[0], new int[0], cellsIndices)
-        {
         }
     }
 }

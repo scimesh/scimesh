@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System;
+using System.Diagnostics;
 
 namespace Scimesh.Base.To
 {
@@ -14,12 +15,10 @@ namespace Scimesh.Base.To
         public static readonly Func<MeshCellField, MeshPointField> cellFieldToPointField = (cf) =>
         {
             float?[] values = new float?[cf.Mesh.points.Length * cf.NComponents];
-            MeshPointField pf = new MeshPointField(cf.Name, cf.NComponents, values.Length, values, cf.Mesh);
-
+            MeshPointField pf = new MeshPointField(cf.Name, cf.NComponents, values, cf.Mesh);
             // Cells values to points values
             // Weighted (by square distances from centroids) arithmetic mean algorithm
             Mesh mesh = cf.Mesh;
-
             // Calculate cells centroids coordiantes array
             float[,] cellsCentroids = new float[mesh.cells.Length, 3];
             for (int i = 0; i < mesh.cells.Length; i++)
@@ -29,7 +28,6 @@ namespace Scimesh.Base.To
                 cellsCentroids[i, 1] = centroidCoordinates[1];
                 cellsCentroids[i, 2] = centroidCoordinates[2];
             }
-
             // Calculate square distances from points to neighbour cells centroids
             List<List<float>> pointsToCentroidsDistances = new List<List<float>>();
             for (int i = 0; i < mesh.points.Length; i++)
@@ -48,7 +46,6 @@ namespace Scimesh.Base.To
                 }
                 pointsToCentroidsDistances.Add(distances);
             }
-
             // Set weighted (by square distances from centroids) arithmetic mean value to points
             for (int i = 0; i < mesh.points.Length; i++)
             {
@@ -93,12 +90,9 @@ namespace Scimesh.Base.To
         /// isovalue > pointValue, then it is visible.
         /// Also, cell shouldn't contain null values.
         /// </summary>
-        public static readonly Func<MeshPointField, float?, MeshFilter> pointIsovalueCellMeshFilter = (pf, isovalue) =>
+        public static readonly Func<MeshPointField, float?, MeshFilter> pointIsovalueCellsMeshFilter = (pf, isovalue) =>
         {
-            if (pf.NComponents != 1)
-            {
-                throw new ArgumentException("MeshPointField must be a scalar field (nComponents == 1)");
-            }
+            Debug.Assert(pf.NComponents != 1);
             List<int> visibleCells = new List<int>();
             for (int i = 0; i < pf.Mesh.cells.Length; i++)
             {
@@ -128,7 +122,7 @@ namespace Scimesh.Base.To
                     visibleCells.Add(i);
                 }
             }
-            return new MeshFilter(visibleCells.ToArray());
+            return new MeshFilter(new int[0], new int[0], new int[0], visibleCells.ToArray());
         };
 
         /// <summary>
@@ -136,18 +130,13 @@ namespace Scimesh.Base.To
         /// </summary>
         public static readonly Action<MeshPointField, float, float[]> lightning = (pf, isoSquareDist, position) =>
         {
-            if (pf.NComponents != 1)
-            {
-                throw new ArgumentException("MeshPointField must be a scalar field (nComponents == 1)");
-            }
-
+            Debug.Assert(pf.NComponents != 1);
             // Square distance function
             Func<float[], float[], float> squareDist =
                 (pointCs, positionCs) =>
                 (pointCs[0] - positionCs[0]) * (pointCs[0] - positionCs[0])
                 + (pointCs[1] - positionCs[1]) * (pointCs[1] - positionCs[1])
                 + (pointCs[2] - positionCs[2]) * (pointCs[2] - positionCs[2]);
-
             // Search start point
             int startPointIdx = -1;
             for (int i = 0; i < pf.NValues; i++)
@@ -177,12 +166,9 @@ namespace Scimesh.Base.To
                     }
                 }
             }
-
             float[] spCs = pf.Mesh.points[startPointIdx].coordinates;
-
             // Reset point field
             pf.ResetValues();
-
             // Lightning algorithm
             pf[startPointIdx] = new float?[] { squareDist(spCs, position) };
             HashSet<int> points = new HashSet<int>();
@@ -212,127 +198,91 @@ namespace Scimesh.Base.To
         };
 
         /// <summary>
-        /// Boundary faces mesh filter
+        /// Mesh filter that return only boundary faces
 		/// </summary>
         public static readonly Func<Mesh, MeshFilter> boundaryFacesMeshFilter = (m) =>
         {
-            // If pointsFaces isn't evaluated => evaluate them
-            if (!m.pointsFacesEvaluated)
-            {
-                m.EvaluatePointsFaces();
-            }
-            // Find initial boundary face
-            int initFace = -1;
+            List<int> facesIndices = new List<int>(); // Faces indices to MeshFilter
+            HashSet<int> hashFacesIndices = new HashSet<int>();  // Temporary HashSet for faces indices
             for (int i = 0; i < m.faces.Length; i++)
             {
-                bool pairFound = false;
-                for (int j = 0; j < m.faces.Length; j++)
+                hashFacesIndices.Add(i);
+            }
+            for (int i = 0; i < m.faces.Length; i++)
+            {
+                if (hashFacesIndices.Contains(i))
                 {
-                    if (i != j)
+                    hashFacesIndices.Remove(i);
+                    int[] facePointsIndices = m.faces[i].pointsIndices;
+                    bool haveOppositeFace = false;
+                    foreach (int hashFaceIndex in hashFacesIndices)
                     {
-                        pairFound = true;
-                        if (m.faces[i].pointsIndices.Length == m.faces[j].pointsIndices.Length)
+                        haveOppositeFace = true;
+                        int[] hashFacePointsIndices = m.faces[hashFaceIndex].pointsIndices;
+                        foreach (int pointIndex in facePointsIndices)
                         {
-                            foreach (int p1 in m.faces[i].pointsIndices)
+                            bool haveOppositePoint = false;
+                            foreach (int hashPointIndex in hashFacePointsIndices)
                             {
-                                int index = Array.IndexOf(m.faces[j].pointsIndices, p1);
-                                if (index == -1)
+                                if (pointIndex == hashPointIndex)
                                 {
-                                    pairFound = false;
+                                    haveOppositePoint = true;
                                     break;
                                 }
                             }
+                            if (!haveOppositePoint)
+                            {
+                                haveOppositeFace = false;
+                                break;
+                            }
                         }
-                        else
+                        if (haveOppositeFace)
                         {
-                            pairFound = false;
-                        }
-                        if (pairFound)
-                        {
+                            hashFacesIndices.Remove(hashFaceIndex);
                             break;
                         }
                     }
-                }
-                if (!pairFound)
-                {
-                    initFace = i;
-                    break;
-                }
-            }
-            // FacesIndices hash
-            HashSet<int> facesIdxsHash = new HashSet<int>();
-            facesIdxsHash.Add(initFace);
-            // Lighting algorithm
-            HashSet<int> pointsIdxs = new HashSet<int>();
-            foreach (int p in m.faces[initFace].pointsIndices)
-            {
-                pointsIdxs.Add(p);
-            }
-            while (pointsIdxs.Count != 0)
-            {
-                HashSet<int> newPointsIdxs = new HashSet<int>();
-                foreach (int pointIdx in pointsIdxs)
-                {
-                    int[] facesIdxs = m.points[pointIdx].facesIndices;
-                    foreach (int faceIdx in facesIdxs)
+                    if (!haveOppositeFace)
                     {
-                        if (!facesIdxsHash.Contains(faceIdx))
-                        {
-                            // Check face on boundary face
-                            bool isBoundaryFace = true;
-                            for (int j = 0; j < m.faces.Length; j++)
-                            {
-                                if (faceIdx != j)
-                                {
-                                    bool pairFound = true;
-                                    if (m.faces[faceIdx].pointsIndices.Length == m.faces[j].pointsIndices.Length)
-                                    {
-                                        foreach (int p1 in m.faces[faceIdx].pointsIndices)
-                                        {
-                                            int index = Array.IndexOf(m.faces[j].pointsIndices, p1);
-                                            if (index == -1)
-                                            {
-                                                pairFound = false;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        pairFound = false;
-                                    }
-                                    if (pairFound)
-                                    {
-                                        isBoundaryFace = false;
-                                        break;
-                                    }
-                                }
-                            }
-                            // If boundary face add it to hash set
-                            if (isBoundaryFace)
-                            {
-                                facesIdxsHash.Add(faceIdx);
-                                foreach (int p in m.faces[faceIdx].pointsIndices)
-                                {
-                                    newPointsIdxs.Add(p);
-                                }
-                            }
-                        }
+                        facesIndices.Add(i);
                     }
                 }
-                pointsIdxs = newPointsIdxs;
             }
-            int[] faces = new int[facesIdxsHash.Count];
-            facesIdxsHash.CopyTo(faces);
-            return new MeshFilter(new int[0], new int[0], faces, new int[0]);
+            return new MeshFilter(new int[0], new int[0], facesIndices.ToArray(), new int[0]);
         };
 
         /// <summary>
-        /// Create simple mesh by type
+        /// Mesh filter that return all cells
+		/// </summary>
+        public static readonly Func<Mesh, MeshFilter> allCellsMeshFilter = (m) =>
+        {
+            int[] cellsIndices = new int[m.cells.Length];
+            for (int i = 0; i < m.cells.Length; i++)
+            {
+                cellsIndices[i] = i;
+            }
+            return new MeshFilter(new int[0], new int[0], new int[0], cellsIndices);
+        };
+
+        /// <summary>
+        /// Mesh filter that return all faces
+		/// </summary>
+        public static readonly Func<Mesh, MeshFilter> allFacesMeshFilter = (m) =>
+        {
+            int[] facesIndices = new int[m.faces.Length];
+            for (int i = 0; i < m.faces.Length; i++)
+            {
+                facesIndices[i] = i;
+            }
+            return new MeshFilter(new int[0], new int[0], facesIndices, new int[0]);
+        };
+
+        /// <summary>
+        /// Create test Mesh by type
         /// 0 - cube with 2 internal diagonals for boundary mesh filter testing
         /// else - empty mesh
 		/// </summary>
-        public static readonly Func<int, Mesh> mesh = (type) =>
+        public static readonly Func<int, Mesh> testMesh = (type) =>
         {
             if (type == 0)
             {
@@ -366,6 +316,67 @@ namespace Scimesh.Base.To
                 Cell[] cells = new Cell[0];
                 return new Mesh(points, edges, faces, cells);
             }
+        };
+
+        /// <summary>
+        /// Create test MeshPointField by type
+        /// 0 - cube with 2 internal diagonals and scalar field
+        /// 1 - cube with 2 internal diagonals and 3D vector field
+        /// else - type = 0
+		/// </summary>
+        public static readonly Func<int, MeshPointField> testMeshPointField = (type) =>
+        {
+            if (type == 0)
+            {
+                Mesh mesh = testMesh(0);
+                int nComponents = 1;
+                float?[] values = new float?[mesh.points.Length * nComponents];
+                for (int i = 0; i < values.Length; i++)
+                {
+                    values[i] = (float)i;
+                }
+                return new MeshPointField("Test", nComponents, values, mesh);
+            }
+            else if (type == 1)
+            {
+                Mesh mesh = testMesh(0);
+                int nComponents = 3;
+                float?[] values = new float?[mesh.points.Length * nComponents];
+                for (int i = 0; i < values.Length; i++)
+                {
+                    values[i] = (float)i;
+                }
+                return new MeshPointField("Test", nComponents, values, mesh);
+            }
+            else
+            {
+                Mesh mesh = testMesh(0);
+                int nComponents = 1;
+                float?[] values = new float?[mesh.points.Length * nComponents];
+                for (int i = 0; i < values.Length; i++)
+                {
+                    values[i] = (float)i;
+                }
+                return new MeshPointField("Test", nComponents, values, mesh);
+            }
+        };
+
+        /// <summary>
+        /// Triangulate Face into Triangle Faces for Unity export
+		/// </summary>
+        public static readonly Func<Face, Face[]> triangulateFace = (f) =>
+        {
+            int nFaces = f.pointsIndices.Length - 2;
+            Face[] fs = new Face[nFaces];
+            for (int i = 0; i < nFaces; i++)
+            {
+                int[] pointsIndices = new int[3];
+                pointsIndices[0] = f.pointsIndices[0];
+                pointsIndices[1] = f.pointsIndices[i + 1];
+                pointsIndices[2] = f.pointsIndices[i + 2];
+                fs[i] = new Face(pointsIndices);
+            }
+            return fs;
         };
     }
 }
