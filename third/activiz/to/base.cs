@@ -91,11 +91,11 @@ namespace Scimesh.Third.Activiz.To
             vtkXMLMultiBlockDataReader reader = vtkXMLMultiBlockDataReader.New();
             reader.SetFileName(absPath);
             reader.Update();
-            //reader.UpdateInformation();
             stopwatch.Stop();
             UnityEngine.Debug.Log(string.Format("Reading time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             stopwatch = Stopwatch.StartNew();
             vtkMultiBlockDataSet multiBlock = vtkMultiBlockDataSet.SafeDownCast(reader.GetOutput());
+            vtkInformation[] metaData = Activiz.xmlMultiBlockMetaData(absPath); // FIXME Workaround because Activiz doesn't read MetaData
             stopwatch.Stop();
             UnityEngine.Debug.Log(string.Format("Initializing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             //multiBlock.Update();
@@ -113,10 +113,9 @@ namespace Scimesh.Third.Activiz.To
             {
                 UnityEngine.Debug.Log(string.Format("Block: {0}", i));
                 UnityEngine.Debug.Log(string.Format("Has metadata: {0}", multiBlock.HasMetaData(i)));
-                vtkInformation inf = multiBlock.GetMetaData(i);
-                //UnityEngine.Debug.Log(inf.ToString());
-                string name = inf.Get(vtkMultiBlockDataSet.NAME());
-                UnityEngine.Debug.Log(name);
+                //vtkInformation info = multiBlock.GetMetaData(i); 
+                vtkInformation info = metaData[i]; // FIXME Workaround because Activiz doesn't read MetaData
+                UnityEngine.Debug.Log(info.Get(vtkMultiBlockDataSet.NAME()));
                 vtkUnstructuredGrid ug = vtkUnstructuredGrid.SafeDownCast(multiBlock.GetBlock(i));
                 UnityEngine.Debug.Log(string.Format("Number of points: {0}", ug.GetNumberOfPoints()));
                 UnityEngine.Debug.Log(string.Format("Number of cells: {0}", ug.GetNumberOfCells()));
