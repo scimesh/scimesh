@@ -1,7 +1,9 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
+using Scimesh.Third.Activiz;
 
 public class ActivizToUnity : MonoBehaviour
 {
@@ -12,6 +14,8 @@ public class ActivizToUnity : MonoBehaviour
     public string polydataFilename;
     public string xmlMultiBlockDataFilename;
     public Material mat;
+
+    public List<Pairs> xmlMultiBlockMetaData;
 
     public void Clear()
     {
@@ -25,14 +29,14 @@ public class ActivizToUnity : MonoBehaviour
         UnityEngine.Debug.Log(string.Format("Clearing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
     }
 
-    public void PolydataToUnity()
+    public void ReadPolydataToUnity()
     {
         UnityEngine.Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
         Clear();
         Stopwatch stopwatch = Stopwatch.StartNew();
         Scimesh.Base.Mesh[] ms = new Scimesh.Base.Mesh[1];
         Scimesh.Base.MeshFilter[] mfs = new Scimesh.Base.MeshFilter[1];
-        ms[0] = Scimesh.Third.Activiz.To.Base.polydataToMesh(polydataFilename);
+        ms[0] = Scimesh.Third.Activiz.To.Base.readPolydataToMesh(polydataFilename);
         stopwatch.Stop();
         UnityEngine.Debug.Log(string.Format("Reading time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
         UnityEngine.Debug.Log("Serialising");
@@ -86,12 +90,12 @@ public class ActivizToUnity : MonoBehaviour
         UnityEngine.Debug.Log(string.Format("Elapsed time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
     }
 
-    public void XmlMultiBlockDataToUnity()
+    public void ReadXmlMultiBlockDataToUnity()
     {
         UnityEngine.Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
         Clear();
         Stopwatch stopwatch = Stopwatch.StartNew();
-        Scimesh.Base.Mesh[] ms = Scimesh.Third.Activiz.To.Base.xmlMultiBlockDataToMesh(xmlMultiBlockDataFilename);
+        Scimesh.Base.Mesh[] ms = Scimesh.Third.Activiz.To.Base.readXmlMultiBlockDataToMesh(xmlMultiBlockDataFilename);
         Scimesh.Base.MeshFilter[] mfs = new Scimesh.Base.MeshFilter[ms.Length];
         stopwatch.Stop();
         UnityEngine.Debug.Log(string.Format("Reading time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
@@ -153,4 +157,35 @@ public class ActivizToUnity : MonoBehaviour
         }
     }
 
+    public void ReadXmlMultiBlockMetaDataToUnity()
+    {
+        xmlMultiBlockMetaData = new List<Pairs>();
+        Dictionary<string, string>[] dicts = Scimesh.Third.Activiz.To.Unity.vtkMultiBlockMetaDataToDicts(
+            Scimesh.Third.Activiz.To.Activiz.readXmlMultiBlockMetaData(xmlMultiBlockDataFilename));
+        foreach (Dictionary<string, string> dict in dicts)
+        {
+            List<string> keys = new List<string>();
+            List<string> values = new List<string>();
+            foreach (KeyValuePair<string, string> entry in dict)
+            {
+                keys.Add(entry.Key);
+                values.Add(entry.Value);
+            }
+            Pairs ps = new Pairs(keys.ToArray(), values.ToArray());
+            xmlMultiBlockMetaData.Add(ps);
+        }
+    }
+
+    [System.Serializable]
+    public class Pairs
+    {
+        public string[] keys;
+        public string[] values;
+
+        public Pairs(string[] keys, string[] values)
+        {
+            this.keys = keys;
+            this.values = values;
+        }
+    }
 }

@@ -12,8 +12,9 @@ namespace Scimesh.Third.Activiz.To
         /// <summary>
         /// FIXME Workaround of Activiz not reading xmlMultiBlockData MetaData
         /// </summary>
-        public static readonly Func<string, vtkInformation[]> xmlMultiBlockMetaData = (relPath) =>
+        public static readonly Func<string, vtkInformation[]> readXmlMultiBlockMetaData = (relPath) =>
         {
+            UnityEngine.Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
             string absPath = Path.Combine(Application.dataPath, relPath);
             UnityEngine.Debug.Log("Reading " + absPath);
             List<vtkInformation> multiBlockMetaData = new List<vtkInformation>();
@@ -28,30 +29,26 @@ namespace Scimesh.Third.Activiz.To
                         switch (reader.Name)
                         {
                             case "VTKFile":
-                                //UnityEngine.Debug.Log("Start <VTKFile> element.");
                                 break;
                             case "vtkMultiBlockDataSet":
-                                //UnityEngine.Debug.Log("Start <vtkMultiBlockDataSet> element.");
                                 break;
                             case "DataSet":
-                                //UnityEngine.Debug.Log("Start <DataSet> element.");
                                 vtkInformation blockMetaData = vtkInformation.New();
                                 // Search for the attribute name on this current node.
-                                string attribute = reader["index"];
-                                if (attribute != null)
+                                string index = reader["index"];  // FIXME Workaround No information key for index...
+                                if (index != null)
                                 {
-                                    //UnityEngine.Debug.Log("  Has attribute name: " + attribute);
+                                    blockMetaData.Set(vtkCompositeDataSet.DATA_PIECE_NUMBER(), int.Parse(index));
                                 }
-                                attribute = reader["name"];
-                                if (attribute != null)
+                                string name = reader["name"];
+                                if (name != null)
                                 {
-                                    blockMetaData.Set(vtkMultiBlockDataSet.NAME(), attribute);
-                                    //UnityEngine.Debug.Log("  Has attribute name: " + attribute);
+                                    blockMetaData.Set(vtkCompositeDataSet.NAME(), name);
                                 }
-                                attribute = reader["file"];
-                                if (attribute != null)
+                                string file = reader["file"];  // FIXME Workaround No information key for file path...
+                                if (file != null)
                                 {
-                                    //UnityEngine.Debug.Log("  Has attribute name: " + attribute);
+                                    blockMetaData.Set(vtkCompositeDataSet.FIELD_NAME(), file);
                                 }
                                 multiBlockMetaData.Add(blockMetaData);
                                 break;

@@ -14,13 +14,17 @@ public class ActivizToUnityEditor : Editor
         {
             myScript.Clear();
         }
-        if (GUILayout.Button("Polydata to Unity"))
+        if (GUILayout.Button("ReadPolydata to Unity"))
         {
-            myScript.PolydataToUnity();
+            myScript.ReadPolydataToUnity();
         }
-        if (GUILayout.Button("XmlMultiBlockData to Unity"))
+        if (GUILayout.Button("ReadXmlMultiBlockData to Unity"))
         {
-            myScript.XmlMultiBlockDataToUnity();
+            myScript.ReadXmlMultiBlockDataToUnity();
+        }
+        if (GUILayout.Button("ReadXmlMultiBlockMetaDataToUnity to Unity"))
+        {
+            myScript.ReadXmlMultiBlockMetaDataToUnity();
         }
     }
 }
