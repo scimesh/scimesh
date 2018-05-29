@@ -48,7 +48,7 @@ public class BaseToUnity : MonoBehaviour
             Scimesh.Base.To.Base.boundaryFacesMeshFilter2(mpf.Mesh),
             //Scimesh.Base.To.Base.boundaryFacesMeshFilter(mpf.Mesh),
             //Scimesh.Base.To.Base.allFacesMeshFilter(mpf.Mesh),
-            Scimesh.Color.Colormaps.dictionary[Scimesh.Color.Colormaps.Name.RainbowAlphaBlendedTransparent]);
+            Scimesh.Color.GetColormap.byName[Scimesh.Color.GetColormap.Name.RainbowAlphaBlendedTransparent]);
         stopwatch.Stop();
         UnityEngine.Debug.Log("Scimesh to UnityMesh " + stopwatch.ElapsedMilliseconds + " ms");
         // Scimesh Unity

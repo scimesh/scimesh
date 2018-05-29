@@ -5,14 +5,14 @@ using UnityEngine;
 
 namespace Scimesh.Color
 {
-    public static class Colormaps
+    public static class GetColormap
     {
         public enum Name { Rainbow, RainbowAlpha, RainbowAlphaBlendedTransparent, HotAndCold };
-        public static Dictionary<Name, Colormap> dictionary;
+        public static Dictionary<Name, Colormap> byName;
 
-        static Colormaps()
+        static GetColormap()
         {
-            dictionary = new Dictionary<Name, Colormap>
+            byName = new Dictionary<Name, Colormap>
             {
                 {
                     Name.Rainbow, new Colormap(new float[5, 3] {

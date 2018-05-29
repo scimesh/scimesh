@@ -89,6 +89,10 @@ namespace Scimesh.Base
 
         public virtual float? GetNormedValue(int valueIndex)
         {
+            if (MaxValueMagnitude - MinValueMagnitude == 0)  // For uniform field
+            {
+                return 0;
+            }
             float?[] value = this[valueIndex];
             float? sqrMagnitude = 0;
             foreach (float? component in value)
@@ -153,16 +157,63 @@ namespace Scimesh.Base
         {
             throw new NotImplementedException();
         }
+
+        public override string ToString()
+        {
+            string str = "";
+            str += string.Format("Type: {0} \n", this.GetType().Name);
+            str += string.Format("Name: {0} \n", Name);
+            str += string.Format("Dim: {0} \n", Dim);
+            str += string.Format("NComponents: {0} \n", NComponents);
+            str += string.Format("NValues: {0} \n", NValues);
+            str += string.Format("Data Length: {0} \n", Data.Length);
+            str += string.Format("Coordinates Length: {0} \n", Coordinates.Length);
+            // Max Value
+            str += string.Format("MaxValueIndex: {0}\t", MaxValueIndex);
+            str += "MaxValue: [";
+            for (int i = 0; i < NComponents; i++)
+            {
+                str += string.Format("{0} ", MaxValue[i]);
+            }
+            str += string.Format("]\tMaxValueMagnitude: {0}\n", MaxValueMagnitude);
+            // Min Value
+            str += string.Format("MinValueIndex: {0}\t", MinValueIndex);
+            str += "MinValue: [";
+            for (int i = 0; i < NComponents; i++)
+            {
+                str += string.Format("{0} ", MinValue[i]);
+            }
+            str += string.Format("]\tMinValueMagnitude: {0}\n", MinValueMagnitude);
+            // Table
+            str += "Index\t";
+            for (int i = 0; i < NComponents; i++)
+            {
+                str += string.Format("Component {0}\t", i + 1);
+            }
+            str += "\n";
+            for (int i = 0; i < NValues; i++)
+            {
+                string valueStr = "";
+                valueStr += string.Format("{0}\t", i);
+                float?[] value = GetValue(i);
+                foreach (float? c in value)
+                {
+                    valueStr += string.Format("{0}\t", c);
+                }
+                str += string.Format("{0}\n", valueStr);
+            }
+            return str;
+        }
     }
 
     public class MeshPointField : DiscreteField
     {
         public Mesh Mesh { get; private set; }
 
-        public MeshPointField(string name, int nComponents, float?[] values, Mesh mesh)
-            : base(name, nComponents, mesh.MaxDim, mesh.points.Length, values, new float[0])
+        public MeshPointField(string name, int nComponents, float?[] data, Mesh mesh)
+            : base(name, nComponents, mesh.MaxDim, mesh.points.Length, data, new float[0])
         {
-            Debug.Assert(values.Length / nComponents != mesh.points.Length);
+            Debug.Assert(data.Length / nComponents != mesh.points.Length);
             this.Mesh = mesh;
         }
 

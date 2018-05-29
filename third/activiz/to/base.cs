@@ -9,7 +9,10 @@ namespace Scimesh.Third.Activiz.To
 {
     public static class Base
     {
-        public static readonly Func<string, Scimesh.Base.Mesh> readPolydataToMesh = (relPath) =>
+        /// <summary>
+        /// Read Polydata To Mesh
+        /// </summary>
+        public static readonly Func<string, Scimesh.Base.Mesh> rPolydataToMesh = (relPath) =>
         {
             string absPath = Path.Combine(Application.dataPath, relPath);
             UnityEngine.Debug.Log("Reading from " + absPath);
@@ -83,172 +86,212 @@ namespace Scimesh.Third.Activiz.To
             return new Scimesh.Base.Mesh(points, faces.ToArray(), cells);
         };
 
-        public static readonly Func<string, Scimesh.Base.Mesh> readUnstructuredGridToMesh = (relPath) =>
+        /// <summary>
+        /// Read Unstructured Grid To Mesh
+        /// </summary>
+        public static readonly Func<string, Scimesh.Base.Mesh> rXmlUGridToMesh = (relPath) =>
         {
             string absPath = Path.Combine(Application.dataPath, relPath);
-            UnityEngine.Debug.Log("Reading from " + absPath);
-            Stopwatch stopwatch = Stopwatch.StartNew();
             vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
             reader.SetFileName(absPath);
             reader.Update();
-            stopwatch.Stop();
-            //UnityEngine.Debug.Log(string.Format("Reading time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-            //UnityEngine.Debug.Log(string.Format("Block: {0}", i));
-            //UnityEngine.Debug.Log(string.Format("Has metadata: {0}", multiBlock.HasMetaData(i)));
-            //vtkInformation info = multiBlock.GetMetaData(i); 
-            //vtkInformation info = metaData[i]; // FIXME Workaround because Activiz doesn't read MetaData
-            //UnityEngine.Debug.Log(info.Get(vtkMultiBlockDataSet.NAME()));
             vtkUnstructuredGrid ug = vtkUnstructuredGrid.SafeDownCast(reader.GetOutput());
-            UnityEngine.Debug.Log(string.Format("Number of points: {0}", ug.GetNumberOfPoints()));
-            UnityEngine.Debug.Log(string.Format("Number of cells: {0}", ug.GetNumberOfCells()));
-            UnityEngine.Debug.Log(string.Format("Number of pieces: {0}", ug.GetNumberOfPieces()));
-            UnityEngine.Debug.Log("Scimesh");
-            stopwatch = Stopwatch.StartNew();
-            Scimesh.Base.Point[] points = new Scimesh.Base.Point[ug.GetNumberOfPoints()];
-            for (int j = 0; j < ug.GetNumberOfPoints(); j++)
+            UnityEngine.Debug.Log(ug);
+            vtkInformation info = ug.GetInformation();
+            UnityEngine.Debug.Log(info);
+            return uGridToMesh(ug);
+        };
+
+        /// <summary>
+        /// Read XmlUnstructuredGrid's PointDataArray To MeshPointField
+		/// </summary>
+        public static readonly Func<string, int, Scimesh.Base.MeshPointField> rXmlUGridPDArrayToMPField = (relPath, arrayIndex) =>
+        {
+            string absPath = Path.Combine(Application.dataPath, relPath);
+            vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
+            reader.SetFileName(absPath);
+            reader.Update();
+            vtkUnstructuredGrid ug = vtkUnstructuredGrid.SafeDownCast(reader.GetOutput());
+            UnityEngine.Debug.Log(ug);
+            vtkInformation info = ug.GetInformation();
+            UnityEngine.Debug.Log(info);
+            vtkPointData pd = ug.GetPointData();
+            UnityEngine.Debug.Log(pd);
+            vtkDataArray a = pd.GetArray(arrayIndex);
+            UnityEngine.Debug.Log(a);
+            string name = a.GetName();
+            int nComponents = a.GetNumberOfComponents();
+            long nPoints = a.GetNumberOfTuples();
+            List<float?> data = new List<float?>();
+            for (long i = 0; i < nPoints; i++)
             {
-                double[] cs = ug.GetPoint(j);
-                points[j] = new Scimesh.Base.Point(new float[] { (float)cs[0], (float)cs[2], (float)cs[1] });
+                double[] cs;
+                switch (nComponents)  // FIXME Tuple6 implementation? By Tuple9? ...
+                {
+                    case 1:
+                        cs = new double[] { a.GetTuple1(i) };
+                        break;
+                    case 2:
+                        cs = a.GetTuple2(i);
+                        break;
+                    case 3:
+                        cs = a.GetTuple3(i);
+                        break;
+                    case 4:
+                        cs = a.GetTuple4(i);
+                        break;
+                    case 9:
+                        cs = a.GetTuple9(i);
+                        break;
+                    default:
+                        throw new NotImplementedException(string.Format("Tuple with {0} components", nComponents));
+                }
+                foreach (double c in cs)
+                {
+                    data.Add((float)c);
+                }
+            }
+            Scimesh.Base.Mesh m = uGridToMesh(ug);
+            Scimesh.Base.MeshPointField mpf = new Scimesh.Base.MeshPointField(name, nComponents, data.ToArray(), m);
+            return mpf;
+        };
+
+        /// <summary>
+        /// Read XmlUnstructuredGrid's CellDataArray To CellPointField
+        /// </summary>
+        public static readonly Func<string, int, Scimesh.Base.MeshCellField> rXmlUGridCDArrayToMCField = (relPath, arrayIndex) =>
+        {
+            string absPath = Path.Combine(Application.dataPath, relPath);
+            vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
+            reader.SetFileName(absPath);
+            reader.Update();
+            vtkUnstructuredGrid ug = vtkUnstructuredGrid.SafeDownCast(reader.GetOutput());
+            UnityEngine.Debug.Log(ug);
+            vtkInformation info = ug.GetInformation();
+            UnityEngine.Debug.Log(info);
+            vtkCellData cd = ug.GetCellData();
+            UnityEngine.Debug.Log(cd);
+            vtkDataArray a = cd.GetArray(arrayIndex);
+            UnityEngine.Debug.Log(a);
+            string name = a.GetName();
+            int nComponents = a.GetNumberOfComponents();
+            long nPoints = a.GetNumberOfTuples();
+            List<float?> data = new List<float?>();
+            for (long i = 0; i < nPoints; i++)
+            {
+                double[] cs;
+                switch (nComponents)  // FIXME Tuple6 implementation? By Tuple9? ...
+                {
+                    case 1:
+                        cs = new double[] { a.GetTuple1(i) };
+                        break;
+                    case 2:
+                        cs = a.GetTuple2(i);
+                        break;
+                    case 3:
+                        cs = a.GetTuple3(i);
+                        break;
+                    case 4:
+                        cs = a.GetTuple4(i);
+                        break;
+                    case 9:
+                        cs = a.GetTuple9(i);
+                        break;
+                    default:
+                        throw new NotImplementedException(string.Format("Tuple with {0} components", nComponents));
+                }
+                foreach (double c in cs)
+                {
+                    data.Add((float)c);
+                }
+            }
+            Scimesh.Base.Mesh m = uGridToMesh(ug);
+            Scimesh.Base.MeshCellField mcf = new Scimesh.Base.MeshCellField(name, nComponents, data.ToArray(), m);
+            return mcf;
+        };
+
+        /// <summary>
+        /// Read XmlMultiBlockData To Mesh
+        /// </summary>
+        public static readonly Func<string, Scimesh.Base.Mesh[]> rXmlMBDataToMesh = (relPath) =>
+        {
+            string absPath = Path.Combine(Application.dataPath, relPath);
+            vtkXMLMultiBlockDataReader reader = vtkXMLMultiBlockDataReader.New();
+            reader.SetFileName(absPath);
+            reader.Update();
+            vtkMultiBlockDataSet multiBlock = vtkMultiBlockDataSet.SafeDownCast(reader.GetOutput());
+            vtkInformation[] metaData = Activiz.readXmlMultiBlockMetaData(relPath); // FIXME Workaround because Activiz doesn't read MetaData
+            Scimesh.Base.Mesh[] meshes = new Scimesh.Base.Mesh[multiBlock.GetNumberOfBlocks()];
+            for (uint i = 0; i < multiBlock.GetNumberOfBlocks(); i++)
+            {
+                UnityEngine.Debug.Log(string.Format("Block: {0}", i));
+                //UnityEngine.Debug.Log(string.Format("Has metadata: {0}", multiBlock.HasMetaData(i)));
+                //vtkInformation info = multiBlock.GetMetaData(i);
+                vtkInformation info = metaData[i]; // FIXME Workaround because Activiz doesn't read MetaData
+                UnityEngine.Debug.Log(info.Get(vtkCompositeDataSet.DATA_PIECE_NUMBER()));
+                UnityEngine.Debug.Log(info.Get(vtkCompositeDataSet.NAME()));
+                UnityEngine.Debug.Log(info.Get(vtkCompositeDataSet.FIELD_NAME()));
+                vtkUnstructuredGrid ug = vtkUnstructuredGrid.SafeDownCast(multiBlock.GetBlock(i));
+                meshes[i] = uGridToMesh(ug);
+            }
+            return meshes;
+        };
+
+        /// <summary>
+        /// Unstructured Grid To Mesh
+        /// </summary>
+        public static readonly Func<vtkUnstructuredGrid, Scimesh.Base.Mesh> uGridToMesh = (ug) =>
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            Scimesh.Base.Point[] points = new Scimesh.Base.Point[ug.GetNumberOfPoints()];
+            for (int i = 0; i < ug.GetNumberOfPoints(); i++)
+            {
+                double[] cs = ug.GetPoint(i);
+                points[i] = new Scimesh.Base.Point(new float[] { (float)cs[0], (float)cs[2], (float)cs[1] });
             }
             stopwatch.Stop();
             UnityEngine.Debug.Log(string.Format("Points importing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             stopwatch = Stopwatch.StartNew();
             Scimesh.Base.Cell[] cells = new Scimesh.Base.Cell[ug.GetNumberOfCells()];
             int[] cellTypes = new int[ug.GetNumberOfCells()];
-            for (int j = 0; j < ug.GetNumberOfCells(); j++)
+            for (int i = 0; i < ug.GetNumberOfCells(); i++)
             {
-                vtkCell cell = ug.GetCell(j);
+                vtkCell cell = ug.GetCell(i);
                 int[] pointsIds = new int[cell.GetNumberOfPoints()];
-                for (int k = 0; k < cell.GetNumberOfPoints(); k++)
+                for (int j = 0; j < cell.GetNumberOfPoints(); j++)
                 {
-                    pointsIds[k] = (int)cell.GetPointId(k);
+                    pointsIds[j] = (int)cell.GetPointId(j);
                 }
-                cells[j] = new Scimesh.Base.Cell(pointsIds);
-                cellTypes[j] = cell.GetCellType();
+                cells[i] = new Scimesh.Base.Cell(pointsIds);
+                cellTypes[i] = cell.GetCellType();
             }
             stopwatch.Stop();
             UnityEngine.Debug.Log(string.Format("Cells importing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             stopwatch = Stopwatch.StartNew();
             List<Scimesh.Base.Face> faces = new List<Scimesh.Base.Face>();
-            for (int j = 0; j < cellTypes.Length; j++)
+            for (int i = 0; i < cellTypes.Length; i++)
             {
-                int[] triangles = Scimesh.Vtk.To.Base.cellTypeToTrianglesMap[cellTypes[j]];
+                int[] triangles = Scimesh.Vtk.To.Base.cellTypeToTrianglesMap[cellTypes[i]];
                 int nFaces = triangles.Length / 3;
-                Scimesh.Base.Cell cell = cells[j];
+                Scimesh.Base.Cell cell = cells[i];
                 cell.facesIndices = new int[nFaces];
-                for (int k = 0; k < nFaces; k++)
+                for (int j = 0; j < nFaces; j++)
                 {
                     int[] pointsIndices = new int[] {
-                            cell.pointsIndices [triangles [3 * k]],
-                            cell.pointsIndices [triangles [3 * k + 1]],
-                            cell.pointsIndices [triangles [3 * k + 2]]
+                            cell.pointsIndices [triangles [3 * j]],
+                            cell.pointsIndices [triangles [3 * j + 1]],
+                            cell.pointsIndices [triangles [3 * j + 2]]
                         };
                     faces.Add(new Scimesh.Base.Face(pointsIndices));
-                    cell.facesIndices[k] = faces.Count - 1;
+                    cell.facesIndices[j] = faces.Count - 1;
                 }
             }
             stopwatch.Stop();
-            UnityEngine.Debug.Log(string.Format("Faces creating time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
+            UnityEngine.Debug.Log(string.Format("Faces importing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             UnityEngine.Debug.Log(string.Format("Number of scimesh points: {0}", points.Length));
             UnityEngine.Debug.Log(string.Format("Number of scimesh faces: {0}", faces.Count));
             UnityEngine.Debug.Log(string.Format("Number of scimesh cells: {0}", cells.Length));
             return new Scimesh.Base.Mesh(points, faces.ToArray(), cells);
-        };
-
-        public static readonly Func<string, Scimesh.Base.Mesh[]> readXmlMultiBlockDataToMesh = (relPath) =>
-        {
-            UnityEngine.Debug.Log("Relative path: " + relPath);
-            string absPath = Path.Combine(Application.dataPath, relPath);
-            UnityEngine.Debug.Log("Reading " + absPath);
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            vtkXMLMultiBlockDataReader reader = vtkXMLMultiBlockDataReader.New();
-            reader.SetFileName(absPath);
-            reader.Update();
-            stopwatch.Stop();
-            UnityEngine.Debug.Log(string.Format("Reading time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-            stopwatch = Stopwatch.StartNew();
-            vtkMultiBlockDataSet multiBlock = vtkMultiBlockDataSet.SafeDownCast(reader.GetOutput());
-            vtkInformation[] metaData = Activiz.readXmlMultiBlockMetaData(relPath); // FIXME Workaround because Activiz doesn't read MetaData
-            stopwatch.Stop();
-            UnityEngine.Debug.Log(string.Format("Initializing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-            //multiBlock.Update();
-            //multiBlock.UpdateData();
-            //multiBlock.UpdateInformation();
-            //vtkCompositeDataSet cds = reader.GetOutput();
-            //vtkCompositeDataIterator iter = cds.NewIterator();
-            //for (iter.InitTraversal(); iter.IsDoneWithTraversal() != 1; iter.GoToNextItem())
-            //    UnityEngine.Debug.Log(string.Format("Has metadata: {0}", cds.HasMetaData(iter)));
-            //    UnityEngine.Debug.Log(cds.HasMetaData(iter));
-            //    UnityEngine.Debug.Log(cds.GetMetaData(iter).ToString());
-            UnityEngine.Debug.Log(string.Format("Number of blocks: {0}", multiBlock.GetNumberOfBlocks()));
-            Scimesh.Base.Mesh[] meshes = new Scimesh.Base.Mesh[multiBlock.GetNumberOfBlocks()];
-            for (uint i = 0; i < multiBlock.GetNumberOfBlocks(); i++)
-            {
-                UnityEngine.Debug.Log(string.Format("Block: {0}", i));
-                UnityEngine.Debug.Log(string.Format("Has metadata: {0}", multiBlock.HasMetaData(i)));
-                //vtkInformation info = multiBlock.GetMetaData(i); 
-                vtkInformation info = metaData[i]; // FIXME Workaround because Activiz doesn't read MetaData
-                UnityEngine.Debug.Log(info.Get(vtkCompositeDataSet.DATA_PIECE_NUMBER()));
-                UnityEngine.Debug.Log(info.Get(vtkCompositeDataSet.NAME()));
-                UnityEngine.Debug.Log(info.Get(vtkCompositeDataSet.FIELD_NAME()));
-                vtkUnstructuredGrid ug = vtkUnstructuredGrid.SafeDownCast(multiBlock.GetBlock(i));
-                UnityEngine.Debug.Log(string.Format("Number of points: {0}", ug.GetNumberOfPoints()));
-                UnityEngine.Debug.Log(string.Format("Number of cells: {0}", ug.GetNumberOfCells()));
-                UnityEngine.Debug.Log(string.Format("Number of pieces: {0}", ug.GetNumberOfPieces()));
-                UnityEngine.Debug.Log("Scimesh");
-                stopwatch = Stopwatch.StartNew();
-                Scimesh.Base.Point[] points = new Scimesh.Base.Point[ug.GetNumberOfPoints()];
-                for (int j = 0; j < ug.GetNumberOfPoints(); j++)
-                {
-                    double[] cs = ug.GetPoint(j);
-                    points[j] = new Scimesh.Base.Point(new float[] { (float)cs[0], (float)cs[2], (float)cs[1] });
-                }
-                stopwatch.Stop();
-                UnityEngine.Debug.Log(string.Format("Points importing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-                stopwatch = Stopwatch.StartNew();
-                Scimesh.Base.Cell[] cells = new Scimesh.Base.Cell[ug.GetNumberOfCells()];
-                int[] cellTypes = new int[ug.GetNumberOfCells()];
-                for (int j = 0; j < ug.GetNumberOfCells(); j++)
-                {
-                    vtkCell cell = ug.GetCell(j);
-                    int[] pointsIds = new int[cell.GetNumberOfPoints()];
-                    for (int k = 0; k < cell.GetNumberOfPoints(); k++)
-                    {
-                        pointsIds[k] = (int)cell.GetPointId(k);
-                    }
-                    cells[j] = new Scimesh.Base.Cell(pointsIds);
-                    cellTypes[j] = cell.GetCellType();
-                }
-                stopwatch.Stop();
-                UnityEngine.Debug.Log(string.Format("Cells importing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-                stopwatch = Stopwatch.StartNew();
-                List<Scimesh.Base.Face> faces = new List<Scimesh.Base.Face>();
-                for (int j = 0; j < cellTypes.Length; j++)
-                {
-                    int[] triangles = Scimesh.Vtk.To.Base.cellTypeToTrianglesMap[cellTypes[j]];
-                    int nFaces = triangles.Length / 3;
-                    Scimesh.Base.Cell cell = cells[j];
-                    cell.facesIndices = new int[nFaces];
-                    for (int k = 0; k < nFaces; k++)
-                    {
-                        int[] pointsIndices = new int[] {
-                            cell.pointsIndices [triangles [3 * k]],
-                            cell.pointsIndices [triangles [3 * k + 1]],
-                            cell.pointsIndices [triangles [3 * k + 2]]
-                        };
-                        faces.Add(new Scimesh.Base.Face(pointsIndices));
-                        cell.facesIndices[k] = faces.Count - 1;
-                    }
-                }
-                stopwatch.Stop();
-                UnityEngine.Debug.Log(string.Format("Faces creating time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-                UnityEngine.Debug.Log(string.Format("Number of scimesh points: {0}", points.Length));
-                UnityEngine.Debug.Log(string.Format("Number of scimesh faces: {0}", faces.Count));
-                UnityEngine.Debug.Log(string.Format("Number of scimesh cells: {0}", cells.Length));
-                Scimesh.Base.Mesh mesh = new Scimesh.Base.Mesh(points, faces.ToArray(), cells);
-                meshes[i] = mesh;
-            }
-            return meshes;
         };
     }
 }

@@ -11,43 +11,47 @@ namespace Scimesh.Base.To
     {
         /// <summary>
         /// Cell field to point field.
+        /// Weighted (by square distances from centroids) arithmetic mean algorithm 
+        /// TODO To think about MultiDim mesh...
         /// </summary>
         public static readonly Func<MeshCellField, MeshPointField> cellFieldToPointField = (cf) =>
         {
-            float?[] values = new float?[cf.Mesh.points.Length * cf.NComponents];
-            MeshPointField pf = new MeshPointField(cf.Name, cf.NComponents, values, cf.Mesh);
-            // Cells values to points values
-            // Weighted (by square distances from centroids) arithmetic mean algorithm
-            Mesh mesh = cf.Mesh;
+            float?[] data = new float?[cf.Mesh.points.Length * cf.NComponents]; // data array for point field
+            cf.Mesh.EvaluatePointsCells();  // Point-Cells connection needs to this algo
             // Calculate cells centroids coordiantes array
-            float[,] cellsCentroids = new float[mesh.cells.Length, 3];
-            for (int i = 0; i < mesh.cells.Length; i++)
+            float[,] cellsCentroids = new float[cf.Mesh.cells.Length, cf.Mesh.MinDim];
+            for (int i = 0; i < cf.Mesh.cells.Length; i++)
             {
-                float[] centroidCoordinates = mesh.CellCentroid(i);
-                cellsCentroids[i, 0] = centroidCoordinates[0];
-                cellsCentroids[i, 1] = centroidCoordinates[1];
-                cellsCentroids[i, 2] = centroidCoordinates[2];
+                float[] centroidCoordinates = cf.Mesh.CellCentroid(i);
+                for (int j = 0; j < cf.Mesh.MinDim; j++)
+                {
+                    cellsCentroids[i, j] = centroidCoordinates[j];
+                }
             }
             // Calculate square distances from points to neighbour cells centroids
             List<List<float>> pointsToCentroidsDistances = new List<List<float>>();
-            for (int i = 0; i < mesh.points.Length; i++)
+            for (int i = 0; i < cf.Mesh.points.Length; i++)
             {
                 List<float> distances = new List<float>();
-                float[] pointCoordiantes = mesh.points[i].coordinates;
-                for (int j = 0; j < mesh.points[i].cellsIndices.Length; j++)
+                float[] pointCoordiantes = cf.Mesh.points[i].coordinates;
+                for (int j = 0; j < cf.Mesh.points[i].cellsIndices.Length; j++)
                 {
-                    float[] vector = new float[3] {
-                        cellsCentroids [mesh.points [i].cellsIndices [j], 0] - pointCoordiantes [0],
-                        cellsCentroids [mesh.points [i].cellsIndices [j], 1] - pointCoordiantes [1],
-                        cellsCentroids [mesh.points [i].cellsIndices [j], 2] - pointCoordiantes [2]
-                    };
-                    float distance = vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2];
+                    float[] vector = new float[cf.Mesh.MinDim];
+                    for (int k = 0; k < cf.Mesh.MinDim; k++)
+                    {
+                        vector[k] = cellsCentroids[cf.Mesh.points[i].cellsIndices[j], k] - pointCoordiantes[k];
+                    }
+                    float distance = 0;
+                    for (int k = 0; k < cf.Mesh.MinDim; k++)
+                    {
+                        distance += vector[k] * vector[k];
+                    }
                     distances.Add(distance);
                 }
                 pointsToCentroidsDistances.Add(distances);
             }
             // Set weighted (by square distances from centroids) arithmetic mean value to points
-            for (int i = 0; i < mesh.points.Length; i++)
+            for (int i = 0; i < cf.Mesh.points.Length; i++)
             {
                 float sumWeight = 0; // sumW=D1+D2+...+Di (Di - distance to ith cell centroid)
                                      // sumWVi=D1*V1i+D2*V2i+...+Dj*Vji (Vji - ith component of the value in jth cell)
@@ -56,10 +60,9 @@ namespace Scimesh.Base.To
                 {
                     sumWeightValues[j] = 0;
                 }
-                ;
                 for (int j = 0; j < pointsToCentroidsDistances[i].Count; j++)
                 {
-                    int cellIdx = mesh.points[i].cellsIndices[j];
+                    int cellIdx = cf.Mesh.points[i].cellsIndices[j];
                     for (int m = 0; m < sumWeightValues.Length; m++)
                     {
                         sumWeightValues[m] += pointsToCentroidsDistances[i][j] * cf[cellIdx][m];
@@ -79,9 +82,12 @@ namespace Scimesh.Base.To
                         value[j] = null;
                     }
                 }
-                pf[i] = value;
+                for (int j = 0; j < cf.NComponents; j++)
+                {
+                    data[i * cf.NComponents + j] = value[j];
+                }
             }
-            return pf;
+            return new MeshPointField(cf.Name, cf.NComponents, data, cf.Mesh); ;
         };
 
         /// <summary>

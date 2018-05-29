@@ -7,10 +7,11 @@ namespace Scimesh.Third.Activiz.To
     public static class Unity
     {
         /// <summary>
-        /// Information keys names (vtkCompositeDataSet.DATA_PIECE_NUMBER() depend on 
+        /// MultiBlock MetaData to Generic Dictionaries
+        /// Information keys names (vtkCompositeDataSet.DATA_PIECE_NUMBER(), ...) depend on 
         /// Scimesh.Third.Activiz.To.Activiz.readXmlMultiBlockMetaData function
         /// </summary>
-        public static readonly Func<vtkInformation[], Dictionary<string, string>[]> vtkMultiBlockMetaDataToDicts = (infos) =>
+        public static readonly Func<vtkInformation[], Dictionary<string, string>[]> mBlockMDataToDicts = (infos) =>
         {
             List<Dictionary<string, string>> dicts = new List<Dictionary<string, string>>();
             foreach (vtkInformation info in infos)
