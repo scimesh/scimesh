@@ -1,5 +1,5 @@
 # scimesh
-![](https://user-images.githubusercontent.com/34418353/39960565-acdd4da6-562d-11e8-8bfa-6cc96782453d.png)
+![scimesh](https://user-images.githubusercontent.com/34418353/40709032-a8df8218-63fd-11e8-84d0-2869f920af8a.png)
 
 # To use activiz library:
 After project import in Visual Studio:
