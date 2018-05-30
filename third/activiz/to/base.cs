@@ -152,8 +152,61 @@ namespace Scimesh.Third.Activiz.To
                 }
             }
             Scimesh.Base.Mesh m = uGridToMesh(ug);
-            Scimesh.Base.MeshPointField mpf = new Scimesh.Base.MeshPointField(name, nComponents, data.ToArray(), m);
-            return mpf;
+            return new Scimesh.Base.MeshPointField(name, nComponents, data.ToArray(), m);
+        };
+
+        /// <summary>
+        /// Read XmlUnstructuredGrid's PointDataArray To MeshPointField with external Mesh.
+        /// Used to create MeshPointField without creating a new Mesh. 
+        /// It's convienent for constant in time Mesh, when we need to create the same Mesh from each time step file.
+        /// </summary>
+        public static readonly Func<string, int, Scimesh.Base.Mesh, Scimesh.Base.MeshPointField> rXmlUGridPDArrayToMPFieldNoMesh = (relPath, arrayIndex, m) =>
+        {
+            string absPath = Path.Combine(Application.dataPath, relPath);
+            vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
+            reader.SetFileName(absPath);
+            reader.Update();
+            vtkUnstructuredGrid ug = vtkUnstructuredGrid.SafeDownCast(reader.GetOutput());
+            UnityEngine.Debug.Log(ug);
+            vtkInformation info = ug.GetInformation();
+            UnityEngine.Debug.Log(info);
+            vtkPointData pd = ug.GetPointData();
+            UnityEngine.Debug.Log(pd);
+            vtkDataArray a = pd.GetArray(arrayIndex);
+            UnityEngine.Debug.Log(a);
+            string name = a.GetName();
+            int nComponents = a.GetNumberOfComponents();
+            long nPoints = a.GetNumberOfTuples();
+            List<float?> data = new List<float?>();
+            for (long i = 0; i < nPoints; i++)
+            {
+                double[] cs;
+                switch (nComponents)  // FIXME How to implement Tuple6 implementation? By Tuple9? ...
+                {
+                    case 1:
+                        cs = new double[] { a.GetTuple1(i) };
+                        break;
+                    case 2:
+                        cs = a.GetTuple2(i);
+                        break;
+                    case 3:
+                        cs = a.GetTuple3(i);
+                        break;
+                    case 4:
+                        cs = a.GetTuple4(i);
+                        break;
+                    case 9:
+                        cs = a.GetTuple9(i);
+                        break;
+                    default:
+                        throw new NotImplementedException(string.Format("Tuple with {0} components", nComponents));
+                }
+                foreach (double c in cs)
+                {
+                    data.Add((float)c);
+                }
+            }
+            return new Scimesh.Base.MeshPointField(name, nComponents, data.ToArray(), m);
         };
 
         /// <summary>
@@ -208,6 +261,60 @@ namespace Scimesh.Third.Activiz.To
             Scimesh.Base.Mesh m = uGridToMesh(ug);
             Scimesh.Base.MeshCellField mcf = new Scimesh.Base.MeshCellField(name, nComponents, data.ToArray(), m);
             return mcf;
+        };
+
+        /// <summary>
+        /// Read XmlUnstructuredGrid's CellDataArray To MeshPointField with external Mesh.
+        /// Used to create MeshCellField without creating a new Mesh.
+        /// It's convienent for constant in time Mesh, when we need to create the same Mesh from each time step file.
+        /// </summary>
+        public static readonly Func<string, int, Scimesh.Base.Mesh, Scimesh.Base.MeshCellField> rXmlUGridCDArrayToMCFieldNoMesh = (relPath, arrayIndex,m) =>
+        {
+            string absPath = Path.Combine(Application.dataPath, relPath);
+            vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
+            reader.SetFileName(absPath);
+            reader.Update();
+            vtkUnstructuredGrid ug = vtkUnstructuredGrid.SafeDownCast(reader.GetOutput());
+            UnityEngine.Debug.Log(ug);
+            vtkInformation info = ug.GetInformation();
+            UnityEngine.Debug.Log(info);
+            vtkCellData cd = ug.GetCellData();
+            UnityEngine.Debug.Log(cd);
+            vtkDataArray a = cd.GetArray(arrayIndex);
+            UnityEngine.Debug.Log(a);
+            string name = a.GetName();
+            int nComponents = a.GetNumberOfComponents();
+            long nPoints = a.GetNumberOfTuples();
+            List<float?> data = new List<float?>();
+            for (long i = 0; i < nPoints; i++)
+            {
+                double[] cs;
+                switch (nComponents)  // FIXME Tuple6 implementation? By Tuple9? ...
+                {
+                    case 1:
+                        cs = new double[] { a.GetTuple1(i) };
+                        break;
+                    case 2:
+                        cs = a.GetTuple2(i);
+                        break;
+                    case 3:
+                        cs = a.GetTuple3(i);
+                        break;
+                    case 4:
+                        cs = a.GetTuple4(i);
+                        break;
+                    case 9:
+                        cs = a.GetTuple9(i);
+                        break;
+                    default:
+                        throw new NotImplementedException(string.Format("Tuple with {0} components", nComponents));
+                }
+                foreach (double c in cs)
+                {
+                    data.Add((float)c);
+                }
+            }
+            return new Scimesh.Base.MeshCellField(name, nComponents, data.ToArray(), m);
         };
 
         /// <summary>

@@ -1,13 +1,17 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
-public class UnstructuredGrid : MonoBehaviour {
+public class UnstructuredGrid : MonoBehaviour
+{
     [Tooltip("Relative to Assets folder")]
     public string path;
     [Tooltip("Material for Unity Mesh")]
     public Material mat;
     [Tooltip("Point/Cell DataArray index at UnstructuredGrid")]
     public int index;
+
+    public List<GameObject> meshes;
 
     public void Clear()
     {
@@ -17,6 +21,7 @@ public class UnstructuredGrid : MonoBehaviour {
         {
             GameObject.DestroyImmediate(transform.GetChild(i).gameObject);
         }
+        meshes.Clear();
         stopwatch.Stop();
         UnityEngine.Debug.Log(string.Format("Clearing time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
     }
@@ -50,6 +55,7 @@ public class UnstructuredGrid : MonoBehaviour {
             meshFilter.sharedMesh = ums[i];
             MeshRenderer meshRenderer = childMesh.AddComponent<MeshRenderer>();
             meshRenderer.material = mat;
+            meshes.Add(childMesh);
         }
         stopwatch.Stop();
         UnityEngine.Debug.Log(string.Format("Unity time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
@@ -84,6 +90,7 @@ public class UnstructuredGrid : MonoBehaviour {
             meshFilter.sharedMesh = ums[i];
             MeshRenderer meshRenderer = childMesh.AddComponent<MeshRenderer>();
             meshRenderer.material = mat;
+            meshes.Add(childMesh);
         }
         stopwatch.Stop();
         UnityEngine.Debug.Log(string.Format("Unity time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
@@ -98,13 +105,13 @@ public class UnstructuredGrid : MonoBehaviour {
         Scimesh.Base.MeshCellField mcf = Scimesh.Third.Activiz.To.Base.rXmlUGridCDArrayToMCField(path, index);
         stopwatch.Stop();
         UnityEngine.Debug.Log(string.Format("Reading time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-        UnityEngine.Debug.Log(mcf);
+        //UnityEngine.Debug.Log(mcf);
         // Convert Cell Field to Point Field
         stopwatch = Stopwatch.StartNew();
         Scimesh.Base.MeshPointField mpf = Scimesh.Base.To.Base.cellFieldToPointField(mcf);
         stopwatch.Stop();
         UnityEngine.Debug.Log(string.Format("MeshCellField to MeshPointField converting time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
-        UnityEngine.Debug.Log(mpf);
+        //UnityEngine.Debug.Log(mpf);
         // Create MeshFilter
         stopwatch = Stopwatch.StartNew();
         Scimesh.Base.MeshFilter mf = Scimesh.Base.To.Base.boundaryFacesMeshFilter2(mpf.Mesh);
@@ -125,6 +132,7 @@ public class UnstructuredGrid : MonoBehaviour {
             meshFilter.sharedMesh = ums[i];
             MeshRenderer meshRenderer = childMesh.AddComponent<MeshRenderer>();
             meshRenderer.material = mat;
+            meshes.Add(childMesh);
         }
         stopwatch.Stop();
         UnityEngine.Debug.Log(string.Format("Unity time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));

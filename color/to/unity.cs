@@ -1,39 +1,72 @@
-﻿using UnityEngine;
+﻿using System;
 
 namespace Scimesh.Color.To
 {
     public static class Unity
     {
-        public static UnityEngine.Color ColormapColorToUnityColor(Colormap colormap, float? normedValue)
+        public static readonly Func<Colormap, float?, UnityEngine.Color> ColormapColorToUnityColorNullable = (cm, nv) =>
         {
-            if (colormap.Colorspace == "RGB")
+            switch (cm.Colorspace)
             {
-                if (normedValue != null)
-                {
-                    float[] color = colormap.GetColor((float)normedValue);
-                    return new UnityEngine.Color(color[0], color[1], color[2], 1);
-                }
-                else
-                {
+                case "RGB":
+                    if (nv != null)
+                    {
+                        float[] color = cm.GetColor((float)nv);
+                        return new UnityEngine.Color(color[0], color[1], color[2], 1);
+                    }
+                    else
+                    {
+                        return UnityEngine.Color.white;
+                    }
+                case "RGBA":
+                    if (nv != null)
+                    {
+                        float[] color = cm.GetColor((float)nv);
+                        return new UnityEngine.Color(color[0], color[1], color[2], color[3]);
+                    }
+                    else
+                    {
+                        return new UnityEngine.Color(1, 1, 1, 0);
+                    }
+                default:
                     return UnityEngine.Color.white;
-                }
             }
-            else if (colormap.Colorspace == "RGBA")
+        };
+
+        public static readonly Func<Colormap, float?[], UnityEngine.Color[]> ColormapColorToUnityColorNullableArray = (cm, nvs) =>
+        {
+            UnityEngine.Color[] cs = new UnityEngine.Color[nvs.Length];
+            for (int i = 0; i < nvs.Length; i++)
             {
-                if (normedValue != null)
-                {
-                    float[] color = colormap.GetColor((float)normedValue);
+                cs[i] = ColormapColorToUnityColorNullable(cm, nvs[i]);
+            }
+            return cs;
+        };
+
+        public static readonly Func<Colormap, float, UnityEngine.Color> ColormapColorToUnityColor = (cm, nv) =>
+        {
+            float[] color;
+            switch (cm.Colorspace)
+            {
+                case "RGB":
+                    color = cm.GetColor(nv);
+                    return new UnityEngine.Color(color[0], color[1], color[2], 1);
+                case "RGBA":
+                    color = cm.GetColor(nv);
                     return new UnityEngine.Color(color[0], color[1], color[2], color[3]);
-                }
-                else
-                {
-                    return new UnityEngine.Color(1, 1, 1, 0);
-                }
+                default:
+                    return UnityEngine.Color.white;
             }
-            else
+        };
+
+        public static readonly Func<Colormap, float[], UnityEngine.Color[]> ColormapColorToUnityColorArray = (cm, nvs) =>
+        {
+            UnityEngine.Color[] cs = new UnityEngine.Color[nvs.Length];
+            for (int i = 0; i < nvs.Length; i++)
             {
-                return UnityEngine.Color.black;
+                cs[i] = ColormapColorToUnityColor(cm, nvs[i]);
             }
-        }
+            return cs;
+        };
     }
 }
