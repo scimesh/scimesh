@@ -1,23 +1,26 @@
 ﻿using UnityEngine;
 using UnityEditor;
 
-[CustomEditor(typeof(BaseToUnity))]
-public class BaseToUnityEditor : Editor
+namespace Scimesh.Unity
 {
-    public override void OnInspectorGUI()
+    [CustomEditor(typeof(BaseToUnity))]
+    public class BaseToUnityEditor : Editor
     {
-        DrawDefaultInspector();
-
-        BaseToUnity myScript = (BaseToUnity)target;
-
-        if (GUILayout.Button("Clear"))
+        public override void OnInspectorGUI()
         {
-            myScript.Clear();
-        }
+            DrawDefaultInspector();
 
-        if (GUILayout.Button("TestMeshPointField to Unity"))
-        {
-            myScript.TestMeshPointFieldToUnity();
+            BaseToUnity myScript = (BaseToUnity)target;
+
+            if (GUILayout.Button("Clear"))
+            {
+                myScript.Clear();
+            }
+
+            if (GUILayout.Button("TestMeshPointField to Unity"))
+            {
+                myScript.TestMeshPointFieldToUnity();
+            }
         }
     }
 }

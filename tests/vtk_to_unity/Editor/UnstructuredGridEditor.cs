@@ -1,30 +1,33 @@
 ﻿using UnityEngine;
 using UnityEditor;
 
-[CustomEditor(typeof(UnstructuredGrid))]
-public class UnstructuredGridToUnityEditor : Editor
+namespace Scimesh.Unity
 {
-    public override void OnInspectorGUI()
+    [CustomEditor(typeof(UnstructuredGrid))]
+    public class UnstructuredGridToUnityEditor : Editor
     {
-        DrawDefaultInspector();
+        public override void OnInspectorGUI()
+        {
+            DrawDefaultInspector();
 
-        UnstructuredGrid myScript = (UnstructuredGrid)target;
+            UnstructuredGrid myScript = (UnstructuredGrid)target;
 
-        if (GUILayout.Button("Clear"))
-        {
-            myScript.Clear();
-        }
-        if (GUILayout.Button("ReadXml"))
-        {
-            myScript.ReadXmlUGridToUnity();
-        }
-        if (GUILayout.Button("ReadXmlPointArray"))
-        {
-            myScript.ReadXmlUGridPArrayToUnity();
-        }
-        if (GUILayout.Button("ReadXmlCellArray"))
-        {
-            myScript.ReadXmlUGridCArrayToUnity();
+            if (GUILayout.Button("Clear"))
+            {
+                myScript.Clear();
+            }
+            if (GUILayout.Button("ReadXml"))
+            {
+                myScript.ReadXmlUGridToUnity();
+            }
+            if (GUILayout.Button("ReadXmlPointArray"))
+            {
+                myScript.ReadXmlUGridPArrayToUnity();
+            }
+            if (GUILayout.Button("ReadXmlCellArray"))
+            {
+                myScript.ReadXmlUGridCArrayToUnity();
+            }
         }
     }
 }

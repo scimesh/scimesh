@@ -1,26 +1,32 @@
 ﻿using UnityEngine;
 using UnityEditor;
 
-[CustomEditor(typeof(UnstructuredGridTime))]
-public class UnstructuredGridTimeToUnityEditor : Editor
+namespace Scimesh.Unity
 {
-    public override void OnInspectorGUI()
+    [CustomEditor(typeof(UnstructuredGridTime))]
+    public class UnstructuredGridTimeToUnityEditor : Editor
     {
-        DrawDefaultInspector();
+        public override void OnInspectorGUI()
+        {
+            DrawDefaultInspector();
 
-        UnstructuredGridTime myScript = (UnstructuredGridTime)target;
+            UnstructuredGridTime myScript = (UnstructuredGridTime)target;
 
-        if (GUILayout.Button("Clear"))
-        {
-            myScript.Clear();
-        }
-        if (GUILayout.Button("Read"))
-        {
-            myScript.Read();
-        }
-        if (GUILayout.Button("UpdateField"))
-        {
-            myScript.UpdateField();
+            if (GUILayout.Button("Clear"))
+            {
+                myScript.Clear();
+                EditorUtility.SetDirty(target);  // For save changes to play mode
+            }
+            if (GUILayout.Button("Read"))
+            {
+                myScript.Read();
+                EditorUtility.SetDirty(target);  // For save changes to play mode
+            }
+            if (GUILayout.Button("UpdateField"))
+            {
+                myScript.UpdateField();
+                EditorUtility.SetDirty(target);  // For save changes to play mode
+            }
         }
     }
 }
