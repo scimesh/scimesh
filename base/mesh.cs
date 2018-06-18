@@ -83,8 +83,10 @@ namespace Scimesh.Base
         public Edge[] edges;
         public Face[] faces;
         public Cell[] cells;
-        public int MaxDim { get; private set; }
-        public int MinDim { get; private set; }
+        public int maxDim;
+        public int MaxDim { get { return maxDim; }  private set { maxDim = value; } }
+        public int minDim;
+        public int MinDim { get { return minDim; } private set { minDim = value; } }
         public enum Neighbours { InEdges, InFaces, InCells };
         public bool pointsCellsEvaluated = false;
         public bool pointsFacesEvaluated = false;

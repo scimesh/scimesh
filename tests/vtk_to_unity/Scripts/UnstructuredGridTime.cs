@@ -55,21 +55,21 @@ namespace Scimesh.Unity
             Clear();
             Base.Mesh m = Scimesh.Third.Activiz.To.Base.rXmlUGridToMesh(relPath);
             Base.MeshFilter mf = Base.To.Base.boundaryFacesMeshFilter2(m);
-            Base.MeshPointField mpf;
+            Base.MeshPointFieldNullable mpf;
             if (fieldType == FieldType.Point)
             {
-                mpf = Scimesh.Third.Activiz.To.Base.rXmlUGridPDArrayToMPFieldNoMesh(relPath, arrayIndex, m);
+                mpf = Scimesh.Third.Activiz.To.Base.rXmlUGridPDArrayToMPFNullableNoMesh(relPath, arrayIndex, m);
 
             }
             else
             {
-                Base.MeshCellField mcf = Scimesh.Third.Activiz.To.Base.rXmlUGridCDArrayToMCFieldNoMesh(relPath, arrayIndex, m);
-                mpf = Base.To.Base.cellFieldToPointField(mcf);
+                Base.MeshCellFieldNullable mcf = Scimesh.Third.Activiz.To.Base.rXmlUGridCDArrayToMCFNullableNoMesh(relPath, arrayIndex, m);
+                mpf = Base.To.Base.cellFieldToPointFieldNullable(mcf);
             }
             int[][] maps = Base.To.Unity.UMsVerticesToMPointsMaps(m, mf);
             Mesh[] ums = Base.To.Unity.MeshToUMeshesByMaps(m, maps);
             SetMeshes(ums);
-            float[][] meshesNormedValues = Base.To.Unity.MPFieldToUMsNValuesByMaps(mpf, maps);
+            float[][] meshesNormedValues = Base.To.Unity.MPFNullableToUMsNValuesByMaps(mpf, maps);
             times = new List<float>();
             times.Add(0);
             times.Add(1);

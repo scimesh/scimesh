@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using Kitware.VTK;
-using System.IO;
+﻿using Kitware.VTK;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System;
@@ -12,9 +10,8 @@ namespace Scimesh.Third.Activiz.To
         /// <summary>
         /// Read Polydata To Mesh
         /// </summary>
-        public static readonly Func<string, Scimesh.Base.Mesh> rPolydataToMesh = (relPath) =>
+        public static readonly Func<string, Scimesh.Base.Mesh> rPolydataToMesh = (absPath) =>
         {
-            string absPath = Path.Combine(Application.dataPath, relPath);
             UnityEngine.Debug.Log("Reading from " + absPath);
             Stopwatch stopwatch = Stopwatch.StartNew();
             vtkPolyDataReader reader = vtkPolyDataReader.New();
@@ -89,9 +86,8 @@ namespace Scimesh.Third.Activiz.To
         /// <summary>
         /// Read Unstructured Grid To Mesh
         /// </summary>
-        public static readonly Func<string, Scimesh.Base.Mesh> rXmlUGridToMesh = (relPath) =>
+        public static readonly Func<string, Scimesh.Base.Mesh> rXmlUGridToMesh = (absPath) =>
         {
-            string absPath = Path.Combine(Application.dataPath, relPath);
             vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
             reader.SetFileName(absPath);
             reader.Update();
@@ -105,9 +101,8 @@ namespace Scimesh.Third.Activiz.To
         /// <summary>
         /// Read XmlUnstructuredGrid's PointDataArray To MeshPointField
 		/// </summary>
-        public static readonly Func<string, int, Scimesh.Base.MeshPointField> rXmlUGridPDArrayToMPField = (relPath, arrayIndex) =>
+        public static readonly Func<string, int, Scimesh.Base.MeshPointFieldNullable> rXmlUGridPDArrayToMPField = (absPath, arrayIndex) =>
         {
-            string absPath = Path.Combine(Application.dataPath, relPath);
             vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
             reader.SetFileName(absPath);
             reader.Update();
@@ -152,17 +147,16 @@ namespace Scimesh.Third.Activiz.To
                 }
             }
             Scimesh.Base.Mesh m = uGridToMesh(ug);
-            return new Scimesh.Base.MeshPointField(name, nComponents, data.ToArray(), m);
+            return new Scimesh.Base.MeshPointFieldNullable(name, nComponents, data.ToArray(), m);
         };
 
         /// <summary>
-        /// Read XmlUnstructuredGrid's PointDataArray To MeshPointField with external Mesh.
+        /// Read XmlUnstructuredGrid's PointDataArray To MeshPointFieldNullable with external Mesh.
         /// Used to create MeshPointField without creating a new Mesh. 
         /// It's convienent for constant in time Mesh, when we need to create the same Mesh from each time step file.
         /// </summary>
-        public static readonly Func<string, int, Scimesh.Base.Mesh, Scimesh.Base.MeshPointField> rXmlUGridPDArrayToMPFieldNoMesh = (relPath, arrayIndex, m) =>
+        public static readonly Func<string, int, Scimesh.Base.Mesh, Scimesh.Base.MeshPointFieldNullable> rXmlUGridPDArrayToMPFNullableNoMesh = (absPath, arrayIndex, m) =>
         {
-            string absPath = Path.Combine(Application.dataPath, relPath);
             vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
             reader.SetFileName(absPath);
             reader.Update();
@@ -206,15 +200,67 @@ namespace Scimesh.Third.Activiz.To
                     data.Add((float)c);
                 }
             }
+            return new Scimesh.Base.MeshPointFieldNullable(name, nComponents, data.ToArray(), m);
+        };
+
+        /// <summary>
+        /// Read XmlUnstructuredGrid's PointDataArray To MeshPointField with external Mesh.
+        /// Used to create MeshPointField without creating a new Mesh. 
+        /// It's convienent for constant in time Mesh, when we need to create the same Mesh from each time step file.
+        /// </summary>
+        public static readonly Func<string, int, Scimesh.Base.Mesh, Scimesh.Base.MeshPointField> rXmlUGridPDArrayToMPFieldNoMesh = (absPath, arrayIndex, m) =>
+        {
+            vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
+            reader.SetFileName(absPath);
+            reader.Update();
+            vtkUnstructuredGrid ug = vtkUnstructuredGrid.SafeDownCast(reader.GetOutput());
+            //UnityEngine.Debug.Log(ug);
+            vtkInformation info = ug.GetInformation();
+            //UnityEngine.Debug.Log(info);
+            vtkPointData pd = ug.GetPointData();
+            //UnityEngine.Debug.Log(pd);
+            vtkDataArray a = pd.GetArray(arrayIndex);
+            //UnityEngine.Debug.Log(a);
+            string name = a.GetName();
+            int nComponents = a.GetNumberOfComponents();
+            long nPoints = a.GetNumberOfTuples();
+            List<float> data = new List<float>();
+            for (long i = 0; i < nPoints; i++)
+            {
+                double[] cs;
+                switch (nComponents)  // FIXME How to implement Tuple6 implementation? By Tuple9? ...
+                {
+                    case 1:
+                        cs = new double[] { a.GetTuple1(i) };
+                        break;
+                    case 2:
+                        cs = a.GetTuple2(i);
+                        break;
+                    case 3:
+                        cs = a.GetTuple3(i);
+                        break;
+                    case 4:
+                        cs = a.GetTuple4(i);
+                        break;
+                    case 9:
+                        cs = a.GetTuple9(i);
+                        break;
+                    default:
+                        throw new NotImplementedException(string.Format("Tuple with {0} components", nComponents));
+                }
+                foreach (double c in cs)
+                {
+                    data.Add((float)c);
+                }
+            }
             return new Scimesh.Base.MeshPointField(name, nComponents, data.ToArray(), m);
         };
 
         /// <summary>
         /// Read XmlUnstructuredGrid's CellDataArray To CellPointField
         /// </summary>
-        public static readonly Func<string, int, Scimesh.Base.MeshCellField> rXmlUGridCDArrayToMCField = (relPath, arrayIndex) =>
+        public static readonly Func<string, int, Scimesh.Base.MeshCellFieldNullable> rXmlUGridCDArrayToMCField = (absPath, arrayIndex) =>
         {
-            string absPath = Path.Combine(Application.dataPath, relPath);
             vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
             reader.SetFileName(absPath);
             reader.Update();
@@ -259,18 +305,17 @@ namespace Scimesh.Third.Activiz.To
                 }
             }
             Scimesh.Base.Mesh m = uGridToMesh(ug);
-            Scimesh.Base.MeshCellField mcf = new Scimesh.Base.MeshCellField(name, nComponents, data.ToArray(), m);
+            Scimesh.Base.MeshCellFieldNullable mcf = new Scimesh.Base.MeshCellFieldNullable(name, nComponents, data.ToArray(), m);
             return mcf;
         };
 
         /// <summary>
-        /// Read XmlUnstructuredGrid's CellDataArray To MeshPointField with external Mesh.
+        /// Read XmlUnstructuredGrid's CellDataArray To MeshCellFieldNullable with external Mesh.
         /// Used to create MeshCellField without creating a new Mesh.
         /// It's convienent for constant in time Mesh, when we need to create the same Mesh from each time step file.
         /// </summary>
-        public static readonly Func<string, int, Scimesh.Base.Mesh, Scimesh.Base.MeshCellField> rXmlUGridCDArrayToMCFieldNoMesh = (relPath, arrayIndex,m) =>
+        public static readonly Func<string, int, Scimesh.Base.Mesh, Scimesh.Base.MeshCellFieldNullable> rXmlUGridCDArrayToMCFNullableNoMesh = (absPath, arrayIndex,m) =>
         {
-            string absPath = Path.Combine(Application.dataPath, relPath);
             vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
             reader.SetFileName(absPath);
             reader.Update();
@@ -314,20 +359,72 @@ namespace Scimesh.Third.Activiz.To
                     data.Add((float)c);
                 }
             }
+            return new Scimesh.Base.MeshCellFieldNullable(name, nComponents, data.ToArray(), m);
+        };
+
+        /// <summary>
+        /// Read XmlUnstructuredGrid's CellDataArray To MeshCellField with external Mesh.
+        /// Used to create MeshCellField without creating a new Mesh.
+        /// It's convienent for constant in time Mesh, when we need to create the same Mesh from each time step file.
+        /// </summary>
+        public static readonly Func<string, int, Scimesh.Base.Mesh, Scimesh.Base.MeshCellField> rXmlUGridCDArrayToMCFieldNoMesh = (absPath, arrayIndex, m) =>
+        {
+            vtkXMLUnstructuredGridReader reader = vtkXMLUnstructuredGridReader.New();
+            reader.SetFileName(absPath);
+            reader.Update();
+            vtkUnstructuredGrid ug = vtkUnstructuredGrid.SafeDownCast(reader.GetOutput());
+            //UnityEngine.Debug.Log(ug);
+            vtkInformation info = ug.GetInformation();
+            //UnityEngine.Debug.Log(info);
+            vtkCellData cd = ug.GetCellData();
+            //UnityEngine.Debug.Log(cd);
+            vtkDataArray a = cd.GetArray(arrayIndex);
+            //UnityEngine.Debug.Log(a);
+            string name = a.GetName();
+            int nComponents = a.GetNumberOfComponents();
+            long nPoints = a.GetNumberOfTuples();
+            List<float> data = new List<float>();
+            for (long i = 0; i < nPoints; i++)
+            {
+                double[] cs;
+                switch (nComponents)  // FIXME Tuple6 implementation? By Tuple9? ...
+                {
+                    case 1:
+                        cs = new double[] { a.GetTuple1(i) };
+                        break;
+                    case 2:
+                        cs = a.GetTuple2(i);
+                        break;
+                    case 3:
+                        cs = a.GetTuple3(i);
+                        break;
+                    case 4:
+                        cs = a.GetTuple4(i);
+                        break;
+                    case 9:
+                        cs = a.GetTuple9(i);
+                        break;
+                    default:
+                        throw new NotImplementedException(string.Format("Tuple with {0} components", nComponents));
+                }
+                foreach (double c in cs)
+                {
+                    data.Add((float)c);
+                }
+            }
             return new Scimesh.Base.MeshCellField(name, nComponents, data.ToArray(), m);
         };
 
         /// <summary>
         /// Read XmlMultiBlockData To Mesh
         /// </summary>
-        public static readonly Func<string, Scimesh.Base.Mesh[]> rXmlMBDataToMesh = (relPath) =>
+        public static readonly Func<string, Scimesh.Base.Mesh[]> rXmlMBDataToMesh = (absPath) =>
         {
-            string absPath = Path.Combine(Application.dataPath, relPath);
             vtkXMLMultiBlockDataReader reader = vtkXMLMultiBlockDataReader.New();
             reader.SetFileName(absPath);
             reader.Update();
             vtkMultiBlockDataSet multiBlock = vtkMultiBlockDataSet.SafeDownCast(reader.GetOutput());
-            vtkInformation[] metaData = Activiz.readXmlMultiBlockMetaData(relPath); // FIXME Workaround because Activiz doesn't read MetaData
+            vtkInformation[] metaData = Activiz.readXmlMultiBlockMetaData(absPath); // FIXME Workaround because Activiz doesn't read MetaData
             Scimesh.Base.Mesh[] meshes = new Scimesh.Base.Mesh[multiBlock.GetNumberOfBlocks()];
             for (uint i = 0; i < multiBlock.GetNumberOfBlocks(); i++)
             {

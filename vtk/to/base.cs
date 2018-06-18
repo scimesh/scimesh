@@ -440,7 +440,7 @@ namespace Scimesh.Vtk.To
 		/// Read .vtk file from project base folder.
 		/// The unstructured grid to point fields. 
 		/// </summary>
-		public static readonly Func<string, Scimesh.Base.Mesh, List<Scimesh.Base.MeshPointField>> unstructuredGridToPointFields = (filename, m) => {
+		public static readonly Func<string, Scimesh.Base.Mesh, List<Scimesh.Base.MeshPointFieldNullable>> unstructuredGridToPointFields = (filename, m) => {
 			List<List<float?>> fieldsData = new List<List<float?>> ();
 			List<int> fieldsNComponents = new List<int> ();
 			List<string> fieldsNames = new List<string> ();
@@ -494,9 +494,9 @@ namespace Scimesh.Vtk.To
 			} catch (Exception e) {
 				UnityEngine.Debug.Log (string.Format ("Error reading {0}: {1} {2}", filename, e.Message, e.StackTrace));
 			}
-			List<Scimesh.Base.MeshPointField> pointFields = new List<Scimesh.Base.MeshPointField> ();
+			List<Scimesh.Base.MeshPointFieldNullable> pointFields = new List<Scimesh.Base.MeshPointFieldNullable> ();
 			for (int i = 0; i < fieldsNames.Count; i++) {
-				pointFields.Add (new Scimesh.Base.MeshPointField (
+				pointFields.Add (new Scimesh.Base.MeshPointFieldNullable (
 					fieldsNames [i], fieldsNComponents [i], fieldsData [i].ToArray (), m));
 			}
 			return pointFields;
@@ -505,7 +505,7 @@ namespace Scimesh.Vtk.To
 		/// <summary>
 		/// The unstructured grid to cell fields.
 		/// </summary>
-		public static readonly Func<string, Scimesh.Base.Mesh, List<Scimesh.Base.MeshCellField>> unstructuredGridToCellFields = (filename, m) => {
+		public static readonly Func<string, Scimesh.Base.Mesh, List<Scimesh.Base.MeshCellFieldNullable>> unstructuredGridToCellFields = (filename, m) => {
 			List<List<float?>> fieldsData = new List<List<float?>> ();
 			List<int> fieldsNComponents = new List<int> ();
 			List<string> fieldsNames = new List<string> ();
@@ -555,9 +555,9 @@ namespace Scimesh.Vtk.To
 			} catch (Exception e) {
 				UnityEngine.Debug.Log (string.Format ("Error reading {0}: {1} {2}", filename, e.Message, e.StackTrace));
 			}
-			List<Scimesh.Base.MeshCellField> cellFields = new List<Scimesh.Base.MeshCellField> ();
+			List<Scimesh.Base.MeshCellFieldNullable> cellFields = new List<Scimesh.Base.MeshCellFieldNullable> ();
 			for (int i = 0; i < fieldsNames.Count; i++) {
-				cellFields.Add (new Scimesh.Base.MeshCellField (
+				cellFields.Add (new Scimesh.Base.MeshCellFieldNullable (
 					fieldsNames [i], fieldsNComponents [i], fieldsData [i].ToArray (), m));
 			}
 			return cellFields;

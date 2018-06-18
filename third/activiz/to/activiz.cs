@@ -12,10 +12,9 @@ namespace Scimesh.Third.Activiz.To
         /// <summary>
         /// FIXME Workaround of Activiz not reading xmlMultiBlockData MetaData
         /// </summary>
-        public static readonly Func<string, vtkInformation[]> readXmlMultiBlockMetaData = (relPath) =>
+        public static readonly Func<string, vtkInformation[]> readXmlMultiBlockMetaData = (absPath) =>
         {
             UnityEngine.Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
-            string absPath = Path.Combine(Application.dataPath, relPath);
             UnityEngine.Debug.Log("Reading " + absPath);
             List<vtkInformation> multiBlockMetaData = new List<vtkInformation>();
             using (XmlReader reader = XmlReader.Create(absPath))

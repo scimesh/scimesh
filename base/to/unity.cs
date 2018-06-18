@@ -106,7 +106,7 @@ namespace Scimesh.Base.To
         /// <summary>
         /// Scimesh MeshPointField to Unity Mesh.
         /// </summary>
-        public static readonly Func<MeshPointField, MeshFilter, Scimesh.Color.Colormap, UnityEngine.Mesh[]> MeshPointFieldToUnityMesh = (pf, mf, cm) =>
+        public static readonly Func<MeshPointFieldNullable, MeshFilter, Scimesh.Color.Colormap, UnityEngine.Mesh[]> MeshPointFieldToUnityMesh = (pf, mf, cm) =>
         {
             // Unity Meshes vertices and triangles (with max vertices[i].Length == MAX_MESH_VERTICES)
             List<Vector3[]> vs = new List<Vector3[]>();
@@ -341,10 +341,10 @@ namespace Scimesh.Base.To
         };
 
         /// <summary>
-        /// MeshPointField to normed nullable values arrays corresponding to Unity Mesh vertices/colors arrays,
+        /// Nullable MeshPointField to normed nullable values arrays corresponding to Unity Mesh vertices/colors arrays,
         /// by maps from Unity Meshes vertices to Scimesh Mesh points.
         /// </summary>
-        public static readonly Func<MeshPointField, int[][], float?[][]> MPFieldToUMsNValuesByMapsNullable = (mpf, maps) =>
+        public static readonly Func<MeshPointFieldNullable, int[][], float?[][]> MPFNullableToUMsNValuesByMapsNullable = (mpf, maps) =>
         {
             List<float?[]> umsNormdedValues = new List<float?[]>();
             for (int i = 0; i < maps.Length; i++)
@@ -360,7 +360,26 @@ namespace Scimesh.Base.To
         };
 
         /// <summary>
-        /// MeshPointField to normed  values arrays corresponding to Unity Mesh vertices/colors arrays,
+        /// Nullable MeshPointField to normed values arrays corresponding to Unity Mesh vertices/colors arrays,
+        /// by maps from Unity Meshes vertices to Scimesh Mesh points.
+        /// </summary>
+        public static readonly Func<MeshPointFieldNullable, int[][], float[][]> MPFNullableToUMsNValuesByMaps = (mpf, maps) =>
+        {
+            List<float[]> umsNormdedValues = new List<float[]>();
+            for (int i = 0; i < maps.Length; i++)
+            {
+                List<float> normedValues = new List<float>();
+                for (int j = 0; j < maps[i].Length; j++)
+                {
+                    normedValues.Add(mpf.GetNormedValue(maps[i][j]) ?? 0);
+                }
+                umsNormdedValues.Add(normedValues.ToArray());
+            }
+            return umsNormdedValues.ToArray();
+        };
+
+        /// <summary>
+        /// MeshPointField to normed values arrays corresponding to Unity Mesh vertices/colors arrays,
         /// by maps from Unity Meshes vertices to Scimesh Mesh points.
         /// </summary>
         public static readonly Func<MeshPointField, int[][], float[][]> MPFieldToUMsNValuesByMaps = (mpf, maps) =>
@@ -371,7 +390,7 @@ namespace Scimesh.Base.To
                 List<float> normedValues = new List<float>();
                 for (int j = 0; j < maps[i].Length; j++)
                 {
-                    normedValues.Add(mpf.GetNormedValue(maps[i][j]) ?? 0);
+                    normedValues.Add(mpf.GetNormedValue(maps[i][j]));
                 }
                 umsNormdedValues.Add(normedValues.ToArray());
             }

@@ -69,7 +69,7 @@ namespace Scimesh.Unity
             Clear();
             // Read XML file
             Stopwatch stopwatch = Stopwatch.StartNew();
-            Base.MeshPointField mpf = Third.Activiz.To.Base.rXmlUGridPDArrayToMPField(path, index);
+            Base.MeshPointFieldNullable mpf = Third.Activiz.To.Base.rXmlUGridPDArrayToMPField(path, index);
             stopwatch.Stop();
             UnityEngine.Debug.Log(string.Format("Reading time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             // Create MeshFilter
@@ -104,13 +104,13 @@ namespace Scimesh.Unity
             Clear();
             // Read XML file
             Stopwatch stopwatch = Stopwatch.StartNew();
-            Base.MeshCellField mcf = Scimesh.Third.Activiz.To.Base.rXmlUGridCDArrayToMCField(path, index);
+            Base.MeshCellFieldNullable mcf = Scimesh.Third.Activiz.To.Base.rXmlUGridCDArrayToMCField(path, index);
             stopwatch.Stop();
             UnityEngine.Debug.Log(string.Format("Reading time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             //UnityEngine.Debug.Log(mcf);
             // Convert Cell Field to Point Field
             stopwatch = Stopwatch.StartNew();
-            Base.MeshPointField mpf = Scimesh.Base.To.Base.cellFieldToPointField(mcf);
+            Base.MeshPointFieldNullable mpf = Scimesh.Base.To.Base.cellFieldToPointFieldNullable(mcf);
             stopwatch.Stop();
             UnityEngine.Debug.Log(string.Format("MeshCellField to MeshPointField converting time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             //UnityEngine.Debug.Log(mpf);

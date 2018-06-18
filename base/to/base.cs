@@ -10,11 +10,11 @@ namespace Scimesh.Base.To
     public static class Base
     {
         /// <summary>
-        /// Cell field to point field.
+        /// Nullable Cell field to point field.
         /// Weighted (by square distances from centroids) arithmetic mean algorithm 
         /// TODO To think about MultiDim mesh...
         /// </summary>
-        public static readonly Func<MeshCellField, MeshPointField> cellFieldToPointField = (cf) =>
+        public static readonly Func<MeshCellFieldNullable, MeshPointFieldNullable> cellFieldToPointFieldNullable = (cf) =>
         {
             float?[] data = new float?[cf.Mesh.points.Length * cf.NComponents]; // data array for point field
             cf.Mesh.EvaluatePointsCells();  // Point-Cells connection needs to this algo
@@ -87,6 +87,80 @@ namespace Scimesh.Base.To
                     data[i * cf.NComponents + j] = value[j];
                 }
             }
+            return new MeshPointFieldNullable(cf.Name, cf.NComponents, data, cf.Mesh); ;
+        };
+
+        /// <summary>
+        /// Cell field to point field.
+        /// Weighted (by square distances from centroids) arithmetic mean algorithm 
+        /// TODO To think about MultiDim mesh...
+        /// </summary>
+        public static readonly Func<MeshCellField, MeshPointField> cellFieldToPointField = (cf) =>
+        {
+            float[] data = new float[cf.Mesh.points.Length * cf.NComponents]; // data array for point field
+            cf.Mesh.EvaluatePointsCells();  // Point-Cells connection needs to this algo
+            // Calculate cells centroids coordiantes array
+            float[,] cellsCentroids = new float[cf.Mesh.cells.Length, cf.Mesh.MinDim];
+            for (int i = 0; i < cf.Mesh.cells.Length; i++)
+            {
+                float[] centroidCoordinates = cf.Mesh.CellCentroid(i);
+                for (int j = 0; j < cf.Mesh.MinDim; j++)
+                {
+                    cellsCentroids[i, j] = centroidCoordinates[j];
+                }
+            }
+            // Calculate square distances from points to neighbour cells centroids
+            List<List<float>> pointsToCentroidsDistances = new List<List<float>>();
+            for (int i = 0; i < cf.Mesh.points.Length; i++)
+            {
+                List<float> distances = new List<float>();
+                float[] pointCoordiantes = cf.Mesh.points[i].coordinates;
+                for (int j = 0; j < cf.Mesh.points[i].cellsIndices.Length; j++)
+                {
+                    float[] vector = new float[cf.Mesh.MinDim];
+                    for (int k = 0; k < cf.Mesh.MinDim; k++)
+                    {
+                        vector[k] = cellsCentroids[cf.Mesh.points[i].cellsIndices[j], k] - pointCoordiantes[k];
+                    }
+                    float distance = 0;
+                    for (int k = 0; k < cf.Mesh.MinDim; k++)
+                    {
+                        distance += vector[k] * vector[k];
+                    }
+                    distances.Add(distance);
+                }
+                pointsToCentroidsDistances.Add(distances);
+            }
+            // Set weighted (by square distances from centroids) arithmetic mean value to points
+            for (int i = 0; i < cf.Mesh.points.Length; i++)
+            {
+                float sumWeight = 0; // sumW=D1+D2+...+Di (Di - distance to ith cell centroid)
+                                     // sumWVi=D1*V1i+D2*V2i+...+Dj*Vji (Vji - ith component of the value in jth cell)
+                float[] sumWeightValues = new float[cf.NComponents];
+                for (int j = 0; j < sumWeightValues.Length; j++)
+                {
+                    sumWeightValues[j] = 0;
+                }
+                for (int j = 0; j < pointsToCentroidsDistances[i].Count; j++)
+                {
+                    int cellIdx = cf.Mesh.points[i].cellsIndices[j];
+                    for (int m = 0; m < sumWeightValues.Length; m++)
+                    {
+                        sumWeightValues[m] += pointsToCentroidsDistances[i][j] * cf[cellIdx][m];
+                    }
+                    sumWeight += pointsToCentroidsDistances[i][j];
+                }
+                // Vi = sumWVi/sumW (Vi - ith component of the value in the point)
+                float[] value = new float[cf.NComponents];
+                for (int j = 0; j < cf.NComponents; j++)
+                {
+                    value[j] = sumWeightValues[j] / sumWeight;
+                }
+                for (int j = 0; j < cf.NComponents; j++)
+                {
+                    data[i * cf.NComponents + j] = value[j];
+                }
+            }
             return new MeshPointField(cf.Name, cf.NComponents, data, cf.Mesh); ;
         };
 
@@ -96,7 +170,7 @@ namespace Scimesh.Base.To
         /// isovalue > pointValue, then it is visible.
         /// Also, cell shouldn't contain null values.
         /// </summary>
-        public static readonly Func<MeshPointField, float?, MeshFilter> pointIsovalueCellsMeshFilter = (pf, isovalue) =>
+        public static readonly Func<MeshPointFieldNullable, float?, MeshFilter> pointIsovalueCellsMeshFilter = (pf, isovalue) =>
         {
             Debug.Assert(pf.NComponents != 1);
             List<int> visibleCells = new List<int>();
@@ -134,7 +208,7 @@ namespace Scimesh.Base.To
         /// <summary>
         /// The lightning algorithm.
         /// </summary>
-        public static readonly Action<MeshPointField, float, float[]> lightning = (pf, isoSquareDist, position) =>
+        public static readonly Action<MeshPointFieldNullable, float, float[]> lightning = (pf, isoSquareDist, position) =>
         {
             Debug.Assert(pf.NComponents != 1);
             // Square distance function
@@ -443,7 +517,7 @@ namespace Scimesh.Base.To
         /// 3 - quadrangle plane with scalar field
         /// else - type = 0
 		/// </summary>
-        public static readonly Func<int, MeshPointField> testMeshPointField = (type) =>
+        public static readonly Func<int, MeshPointFieldNullable> testMeshPointField = (type) =>
         {
             if (type == 0)
             {
@@ -454,7 +528,7 @@ namespace Scimesh.Base.To
                 {
                     values[i] = (float)i;
                 }
-                return new MeshPointField("Test", nComponents, values, mesh);
+                return new MeshPointFieldNullable("Test", nComponents, values, mesh);
             }
             else if (type == 1)
             {
@@ -465,7 +539,7 @@ namespace Scimesh.Base.To
                 {
                     values[i] = (float)i;
                 }
-                return new MeshPointField("Test", nComponents, values, mesh);
+                return new MeshPointFieldNullable("Test", nComponents, values, mesh);
             }
             else if (type == 2)
             {
@@ -476,7 +550,7 @@ namespace Scimesh.Base.To
                 {
                     values[i] = (float)i;
                 }
-                return new MeshPointField("Test", nComponents, values, mesh);
+                return new MeshPointFieldNullable("Test", nComponents, values, mesh);
             }
             else if (type == 3)
             {
@@ -487,7 +561,7 @@ namespace Scimesh.Base.To
                 {
                     values[i] = (float)i;
                 }
-                return new MeshPointField("Test", nComponents, values, mesh);
+                return new MeshPointFieldNullable("Test", nComponents, values, mesh);
             }
             else
             {
@@ -498,7 +572,7 @@ namespace Scimesh.Base.To
                 {
                     values[i] = (float)i;
                 }
-                return new MeshPointField("Test", nComponents, values, mesh);
+                return new MeshPointFieldNullable("Test", nComponents, values, mesh);
             }
         };
 

@@ -26,7 +26,7 @@ namespace Scimesh.Unity
             Clear();
             // Create MeshPointField
             Stopwatch stopwatch = Stopwatch.StartNew();
-            Scimesh.Base.MeshPointField mpf = Scimesh.Base.To.Base.testMeshPointField(meshPointFieldType);
+            Scimesh.Base.MeshPointFieldNullable mpf = Scimesh.Base.To.Base.testMeshPointField(meshPointFieldType);
             //UnityEngine.Debug.Log(mpf.MaxValueIndex);
             //UnityEngine.Debug.Log(mpf.MinValueIndex);
             //UnityEngine.Debug.Log(mpf.MaxValueMagnitude);
