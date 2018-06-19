@@ -79,7 +79,7 @@ namespace Scimesh.Unity
             UnityEngine.Debug.Log(string.Format("MeshFilter creating time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             // Scimesh Mesh to Unity Mesh
             stopwatch = Stopwatch.StartNew();
-            Mesh[] ums = Scimesh.Base.To.Unity.MeshPointFieldToUnityMesh(mpf, mf, Color.Colormap.Get(Scimesh.Color.Colormap.Name.RainbowAlpha));
+            Mesh[] ums = Scimesh.Base.To.Unity.MeshPointFieldToUnityMesh(mpf, mf, Color.Colormap.Get(Scimesh.Color.Colormap.Name.Rainbow));
             stopwatch.Stop();
             UnityEngine.Debug.Log(string.Format("Scimesh to UnityMesh time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             // Unity
@@ -121,7 +121,7 @@ namespace Scimesh.Unity
             UnityEngine.Debug.Log(string.Format("MeshFilter creating time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             // Scimesh Mesh to Unity Mesh
             stopwatch = Stopwatch.StartNew();
-            Mesh[] ums = Base.To.Unity.MeshPointFieldToUnityMesh(mpf, mf, Color.Colormap.Get(Color.Colormap.Name.RainbowAlpha));
+            Mesh[] ums = Base.To.Unity.MeshPointFieldToUnityMesh(mpf, mf, Color.Colormap.Get(Color.Colormap.Name.Rainbow));
             stopwatch.Stop();
             UnityEngine.Debug.Log(string.Format("Scimesh to UnityMesh time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
             // Unity

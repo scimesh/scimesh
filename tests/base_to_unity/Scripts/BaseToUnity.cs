@@ -50,7 +50,7 @@ namespace Scimesh.Unity
                 Base.To.Base.boundaryFacesMeshFilter2(mpf.Mesh),
                 //Scimesh.Base.To.Base.boundaryFacesMeshFilter(mpf.Mesh),
                 //Scimesh.Base.To.Base.allFacesMeshFilter(mpf.Mesh),
-                Color.Colormap.Get(Color.Colormap.Name.RainbowAlphaBlendedTransparent));
+                Color.Colormap.Get(Color.Colormap.Name.Rainbow));
             stopwatch.Stop();
             UnityEngine.Debug.Log("Scimesh to UnityMesh " + stopwatch.ElapsedMilliseconds + " ms");
             // Scimesh Unity

@@ -467,6 +467,32 @@ namespace Scimesh.Base.To
         };
 
         /// <summary>
+        /// Mesh filter that return cells in point field threshold (slow...)
+		/// </summary>
+        /// <param name="mpf">Scimesh MeshPointField</param>
+        /// <param name="nmin">normed min threshold</param>
+        /// <param name="nmax">normed max threshold</param>
+        public static readonly Func<MeshPointField, float, float, MeshFilter> pointFieldThresholdCellsMeshFilter = (mpf, nmin, nmax) =>
+        {
+            List<int> cellsIndices = new List<int>();
+            for (int i = 0; i < mpf.Mesh.cells.Length; i++)
+            {
+                bool addCell = true;
+                for (int j = 0; j < mpf.Mesh.cells[i].pointsIndices.Length; j++)
+                {
+                    float nvalue = mpf.GetNormedValue(mpf.Mesh.cells[i].pointsIndices[j]);
+                    if (nvalue < nmin || nvalue > nmax)
+                    {
+                        addCell = false;
+                        break;
+                    }
+                }
+                if (addCell) { cellsIndices.Add(i); }
+            }
+            return new MeshFilter(new int[0], new int[0], new int[0], cellsIndices.ToArray());
+        };
+
+        /// <summary>
         /// Mesh filter that return cells that intersect the sphere surface (slow...)
 		/// </summary>
         /// <param name="m">Scimesh Mesh</param>

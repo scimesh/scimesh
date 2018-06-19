@@ -42,7 +42,8 @@ namespace Scimesh.Unity
             PlaneFacesUserCenter,
             PlaneCells,
             PlaneCellsUserCenter,
-            SphereCellsUserCenter
+            SphereCellsUserCenter,
+            Threshold
         };
         [Tooltip("Type of Mesh Filter")]
         public MeshFilterType filterType;
@@ -67,7 +68,11 @@ namespace Scimesh.Unity
         public Vector3 sphereCenter;
         public float sphereRadius;
         public float SphereRadius { get { return sphereRadius; } set { sphereRadius = value; } }
-
+        public float nMinThreshold;
+        public float NMinThreshold { get { return nMinThreshold; } set { nMinThreshold = value; } }
+        public float nMaxThreshold;
+        public float NMaxThreshold { get { return nMaxThreshold; } set { nMaxThreshold = value; } }
+        
         // Use this for initialization
         void Start()
         {
@@ -556,6 +561,9 @@ namespace Scimesh.Unity
                 case MeshFilterType.SphereCellsUserCenter:
                     center = new float[] { sphereCenter.x, sphereCenter.y, sphereCenter.z };
                     mf = Base.To.Base.sphereCellsMeshFilter(m, center, SphereRadius);
+                    break;
+                case MeshFilterType.Threshold:
+                    mf = Base.To.Base.pointFieldThresholdCellsMeshFilter(mpf, NMinThreshold, NMaxThreshold);
                     break;
                 default:
                     mf = Base.To.Base.boundaryFacesMeshFilter2(m);

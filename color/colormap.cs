@@ -8,9 +8,11 @@ namespace Scimesh.Color
         public enum Name
         {
             Rainbow,
-            RainbowAlpha,
-            RainbowAlphaBlendedTransparent,
-            HotAndCold
+            //RainbowAlpha,
+            //RainbowAlphaBlendedTransparent,
+            HotAndCold,
+            BlackAndWhite,
+            Hot
         };
         public enum Colorspace
         {
@@ -28,44 +30,66 @@ namespace Scimesh.Color
                         { 0, 1, 0 },
                         { 1, 1, 0 },
                         { 1, 0, 0 }
-                    }, 
+                    },
                     Colorspace.RGB, true)
             },
-            {
-                Colormap.Name.RainbowAlpha, new Colormap(
-                    Colormap.Name.RainbowAlpha,
-                    new float[5, 4] {
-                        { 0, 0, 1, 1 },
-                        { 0, 1, 1, 1 },
-                        { 0, 1, 0, 1 },
-                        { 1, 1, 0, 1 },
-                        { 1, 0, 0, 1 }
-                    }, 
-                    Colorspace.RGBA, true)
-            },
-            {
-                Colormap.Name.RainbowAlphaBlendedTransparent, new Colormap(
-                    Colormap.Name.RainbowAlphaBlendedTransparent,
-                    new float[6, 4] {
-                        { 0, 0, 1, 0 },
-                        { 0, 0, 1, 1 },
-                        { 0, 1, 1, 1 },
-                        { 0, 1, 0, 1 },
-                        { 1, 1, 0, 1 },
-                        { 1, 0, 0, 1 }
-                    }, 
-                    Colorspace.RGBA, true)
-            },
+            //{
+            //    Colormap.Name.RainbowAlpha, new Colormap(
+            //        Colormap.Name.RainbowAlpha,
+            //        new float[5, 4] {
+            //            { 0, 0, 1, 1 },
+            //            { 0, 1, 1, 1 },
+            //            { 0, 1, 0, 1 },
+            //            { 1, 1, 0, 1 },
+            //            { 1, 0, 0, 1 }
+            //        }, 
+            //        Colorspace.RGBA, true)
+            //},
+            //{
+            //    Colormap.Name.RainbowAlphaBlendedTransparent, new Colormap(
+            //        Colormap.Name.RainbowAlphaBlendedTransparent,
+            //        new float[6, 4] {
+            //            { 0, 0, 1, 0 },
+            //            { 0, 0, 1, 1 },
+            //            { 0, 1, 1, 1 },
+            //            { 0, 1, 0, 1 },
+            //            { 1, 1, 0, 1 },
+            //            { 1, 0, 0, 1 }
+            //        }, 
+            //        Colorspace.RGBA, true)
+            //},
             {
                 Colormap.Name.HotAndCold, new Colormap(
                     Colormap.Name.HotAndCold,
-                    new float[3, 4] {
-                        { 0, 0, 1, 1 },
-                        { 1, 1, 1, 1 },
-                        { 1, 0, 0, 1 }
-                    }, 
-                    Colorspace.RGBA, true)
-            }
+                    new float[3, 3] {
+                        { 0, 0, 1 },
+                        { 1, 1, 1 },
+                        { 1, 0, 0 }
+                    },
+                    Colorspace.RGB, true)
+            },
+            {
+                Colormap.Name.BlackAndWhite, new Colormap(
+                    Colormap.Name.BlackAndWhite,
+                    new float[2, 3] {
+                        { 0, 0, 0 },
+                        { 1, 1, 1 }
+                    },
+                    Colorspace.RGB, true)
+            },
+            {
+                Colormap.Name.Hot, new Colormap(
+                    Colormap.Name.Hot,
+                    new float[5, 3] {
+                        { 0, 0, 0 },
+                        { 1, 0, 0 },
+                        { 1, 0.5f, 0 },
+                        { 1, 1, 0 },
+                        { 1, 1, 1 }
+                    },
+                    Colorspace.RGB, true)
+            },
+
         };
         public static Colormap Get(Name name)
         {

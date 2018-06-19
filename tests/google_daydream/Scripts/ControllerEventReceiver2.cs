@@ -78,6 +78,7 @@ namespace Scimesh.Unity.Google.Daydream
                 // update plane normal by Y axis direction of controller,
                 // update plane center by character controller position
                 // update sphere center by character controller position
+                // If Threshold update 
                 if (!menu.gameObject.activeSelf)
                 {
                     switch (ugt.FilterType)
@@ -103,6 +104,9 @@ namespace Scimesh.Unity.Google.Daydream
                         case (int)UnstructuredGridTime2.MeshFilterType.SphereCellsUserCenter:
                             ugt.sphereCenter = cc.transform.position;
                             ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.SphereCellsUserCenter; // For Auto Update
+                            break;
+                        case (int)UnstructuredGridTime2.MeshFilterType.Threshold:
+                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.Threshold; // For Auto Update
                             break;
                         default:
                             break;
