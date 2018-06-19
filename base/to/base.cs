@@ -399,6 +399,109 @@ namespace Scimesh.Base.To
         };
 
         /// <summary>
+        /// Mesh filter that return faces that intersect the plane (slow...)
+		/// </summary>
+        /// <param name="m">Scimesh Mesh</param>
+        /// <param name="center">plane center</param>
+        /// <param name="normal">plane normal</param>
+        public static readonly Func<Mesh, float[], float[], MeshFilter> planeFacesMeshFilter = (m, center, normal) =>
+        {
+            List<int> facesIndices = new List<int>();
+            for (int i = 0; i < m.faces.Length; i++)
+            {
+                List<float> results = new List<float>();
+                for (int j = 0; j < m.faces[i].pointsIndices.Length; j++)
+                {
+                    Point p = m.points[m.faces[i].pointsIndices[j]];
+                    float[] cs = new float[3];
+                    cs[0] = p.coordinates[0] - center[0];
+                    cs[1] = p.coordinates[1] - center[1];
+                    cs[2] = p.coordinates[2] - center[2];
+                    float dot = cs[0] * normal[0] + cs[1] * normal[1] + cs[2] * normal[2];
+                    results.Add(dot);
+                }
+                for (int j = 1; j < results.Count; j++)
+                {
+                    if (Math.Sign(results[j]) != Math.Sign(results[0]))
+                    {
+                        facesIndices.Add(i);
+                        break;
+                    }
+                }
+            }
+            return new MeshFilter(new int[0], new int[0], facesIndices.ToArray(), new int[0]);
+        };
+
+        /// <summary>
+        /// Mesh filter that return cells that intersect the plane (slow...)
+		/// </summary>
+        /// <param name="m">Scimesh Mesh</param>
+        /// <param name="center">plane center</param>
+        /// <param name="normal">plane normal</param>
+        public static readonly Func<Mesh, float[], float[], MeshFilter> planeCellsMeshFilter = (m, center, normal) =>
+        {
+            List<int> cellsIndices = new List<int>();
+            for (int i = 0; i < m.cells.Length; i++)
+            {
+                List<float> results = new List<float>();
+                for (int j = 0; j < m.cells[i].pointsIndices.Length; j++)
+                {
+                    Point p = m.points[m.cells[i].pointsIndices[j]];
+                    float[] cs = new float[3];
+                    cs[0] = p.coordinates[0] - center[0];
+                    cs[1] = p.coordinates[1] - center[1];
+                    cs[2] = p.coordinates[2] - center[2];
+                    float dot = cs[0] * normal[0] + cs[1] * normal[1] + cs[2] * normal[2];
+                    results.Add(dot);
+                }
+                for (int j = 1; j < results.Count; j++)
+                {
+                    if (Math.Sign(results[j]) != Math.Sign(results[0]))
+                    {
+                        cellsIndices.Add(i);
+                        break;
+                    }
+                }
+            }
+            return new MeshFilter(new int[0], new int[0], new int[0], cellsIndices.ToArray());
+        };
+
+        /// <summary>
+        /// Mesh filter that return cells that intersect the sphere surface (slow...)
+		/// </summary>
+        /// <param name="m">Scimesh Mesh</param>
+        /// <param name="center">sphere center</param>
+        /// <param name="radius">sphere radius</param>
+        public static readonly Func<Mesh, float[], float, MeshFilter> sphereCellsMeshFilter = (m, center, radius) =>
+        {
+            List<int> cellsIndices = new List<int>();
+            for (int i = 0; i < m.cells.Length; i++)
+            {
+                List<float> results = new List<float>();
+                for (int j = 0; j < m.cells[i].pointsIndices.Length; j++)
+                {
+                    Point p = m.points[m.cells[i].pointsIndices[j]];
+                    float[] cs = new float[3];
+                    cs[0] = p.coordinates[0] - center[0];
+                    cs[1] = p.coordinates[1] - center[1];
+                    cs[2] = p.coordinates[2] - center[2];
+                    float sqrMag = cs[0] * cs[0] + cs[1] * cs[1] + cs[2] * cs[2];
+                    float delta = radius * radius - sqrMag;
+                    results.Add(delta);
+                }
+                for (int j = 1; j < results.Count; j++)
+                {
+                    if (Math.Sign(results[j]) != Math.Sign(results[0]))
+                    {
+                        cellsIndices.Add(i);
+                        break;
+                    }
+                }
+            }
+            return new MeshFilter(new int[0], new int[0], new int[0], cellsIndices.ToArray());
+        };
+
+        /// <summary>
         /// Mesh filter that return all cells
 		/// </summary>
         public static readonly Func<Mesh, MeshFilter> allCellsMeshFilter = (m) =>
@@ -592,6 +695,20 @@ namespace Scimesh.Base.To
                 fs[i] = new Face(pointsIndices);
             }
             return fs;
+        };
+
+        /// <summary>
+        /// Opposite Face for Unity export
+		/// </summary>
+        public static readonly Func<Face, Face> oppositeFace = (f) =>
+        {
+            List<int> pointsIndices = new List<int>();
+            for (int i = f.pointsIndices.Length - 1; i >= 0; i--)
+            {
+                pointsIndices.Add(f.pointsIndices[i]);
+            }
+            Face nf = new Face(pointsIndices.ToArray());
+            return nf;
         };
     }
 }

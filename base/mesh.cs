@@ -88,9 +88,10 @@ namespace Scimesh.Base
         public int minDim;
         public int MinDim { get { return minDim; } private set { minDim = value; } }
         public enum Neighbours { InEdges, InFaces, InCells };
-        public bool pointsCellsEvaluated = false;
-        public bool pointsFacesEvaluated = false;
-        public bool pointsEdgesEvaluated = false;
+        public bool pointsCellsEvaluated;
+        public bool pointsFacesEvaluated;
+        public bool pointsEdgesEvaluated;
+        public bool facesNeighbourFacesEvaluated;
 
         public Mesh(Point[] points, Edge[] edges, Face[] faces, Cell[] cells)
         {
@@ -306,6 +307,7 @@ namespace Scimesh.Base
                 faces[i].neighbourFacesIndices = new int[facesIndices.Count];
                 facesIndices.CopyTo(faces[i].neighbourFacesIndices);
             }
+            facesNeighbourFacesEvaluated = true;
         }
 
         void EvaluateDims()

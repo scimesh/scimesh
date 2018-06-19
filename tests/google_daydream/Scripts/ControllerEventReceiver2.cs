@@ -73,6 +73,41 @@ namespace Scimesh.Unity.Google.Daydream
                 Vector3 menuPos = cc.gameObject.transform.position + rot * menuDistance;
                 Quaternion menuRot = rot;
                 menu.gameObject.transform.SetPositionAndRotation(menuPos, menuRot);
+                // On Menu Hide.
+                // If UGT mesh filter type is PlaneFaces or PlaneFacesUserCenter or SphereCellsUserCenter:
+                // update plane normal by Y axis direction of controller,
+                // update plane center by character controller position
+                // update sphere center by character controller position
+                if (!menu.gameObject.activeSelf)
+                {
+                    switch (ugt.FilterType)
+                    {
+                        case (int)UnstructuredGridTime2.MeshFilterType.PlaneFaces:
+                            ugt.planeNormal = rot * Vector3.up;
+                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.PlaneFaces; // For Auto Update
+                            break;
+                        case (int)UnstructuredGridTime2.MeshFilterType.PlaneFacesUserCenter:
+                            ugt.planeNormal = rot * Vector3.up;
+                            ugt.planeCenter = cc.transform.position;
+                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.PlaneFacesUserCenter; // For Auto Update
+                            break;
+                        case (int)UnstructuredGridTime2.MeshFilterType.PlaneCells:
+                            ugt.planeNormal = rot * Vector3.up;
+                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.PlaneCells; // For Auto Update
+                            break;
+                        case (int)UnstructuredGridTime2.MeshFilterType.PlaneCellsUserCenter:
+                            ugt.planeNormal = rot * Vector3.up;
+                            ugt.planeCenter = cc.transform.position;
+                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.PlaneCellsUserCenter; // For Auto Update
+                            break;
+                        case (int)UnstructuredGridTime2.MeshFilterType.SphereCellsUserCenter:
+                            ugt.sphereCenter = cc.transform.position;
+                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.SphereCellsUserCenter; // For Auto Update
+                            break;
+                        default:
+                            break;
+                    }
+                }
             }
             // Move logic
             if (GvrControllerInput.ClickButtonDown && !menu.gameObject.activeSelf)

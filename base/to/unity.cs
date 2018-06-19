@@ -315,6 +315,147 @@ namespace Scimesh.Base.To
         };
 
         /// <summary>
+        /// Maps from Two Sided Unity Meshes vertices to Scimesh Mesh points.
+        /// Each Unity Mesh's number of vertices limited by MAX_MESH_VERTICES,
+        /// so number of Unity Meshes for one Scimesh Mesh can be greater than 1.
+        /// Scimesh Mesh pointIndex = maps[i][j], where i - index of Unity Mesh, j - index of Unity Mesh vertex.
+        /// </summary>
+        public static readonly Func<Mesh, MeshFilter, int[][]> UMsVerticesToMPointsMapsTwoSided = (m, mf) =>
+        {
+            List<int[]> maps = new List<int[]>();
+            // Convert Cells
+            List<int> map = new List<int>();
+            int vertexCnt = 0;
+            foreach (int cellIndex in mf.cellsIndices)
+            {
+                foreach (int faceIndex in m.cells[cellIndex].facesIndices)
+                {
+                    // Two Sided Face
+                    int nVertices = (m.faces[faceIndex].pointsIndices.Length - 2) * 3 * 2;
+                    if (vertexCnt <= MAX_MESH_VERTICES - nVertices + 1)
+                    {
+                        // Main Face
+                        Face[] fs = Base.triangulateFace(m.faces[faceIndex]);
+                        foreach (Face f in fs)
+                        {
+                            foreach (int pointIndex in f.pointsIndices)
+                            {
+                                map.Add(pointIndex);
+                                vertexCnt += 1;
+                            }
+                        }
+                        // Opposite Face
+                        Face of = Base.oppositeFace(m.faces[faceIndex]);
+                        fs = Base.triangulateFace(of);
+                        foreach (Face f in fs)
+                        {
+                            foreach (int pointIndex in f.pointsIndices)
+                            {
+                                map.Add(pointIndex);
+                                vertexCnt += 1;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        maps.Add(map.ToArray());
+                        map = new List<int>();
+                        vertexCnt = 0;
+                        // Main Face
+                        Face[] fs = Base.triangulateFace(m.faces[faceIndex]);
+                        foreach (Face f in fs)
+                        {
+                            foreach (int pointIndex in f.pointsIndices)
+                            {
+                                map.Add(pointIndex);
+                                vertexCnt += 1;
+                            }
+                        }
+                        // Opposite Face
+                        Face of = Base.oppositeFace(m.faces[faceIndex]);
+                        fs = Base.triangulateFace(of);
+                        foreach (Face f in fs)
+                        {
+                            foreach (int pointIndex in f.pointsIndices)
+                            {
+                                map.Add(pointIndex);
+                                vertexCnt += 1;
+                            }
+                        }
+                    }
+                }
+            }
+            if (vertexCnt > 0)
+            {
+                maps.Add(map.ToArray());
+            }
+            // Convert Faces
+            map = new List<int>();
+            vertexCnt = 0;
+            foreach (int faceIndex in mf.facesIndices)
+            {
+                // Two Sided Face
+                int nVertices = (m.faces[faceIndex].pointsIndices.Length - 2) * 3 * 2;
+                if (vertexCnt <= MAX_MESH_VERTICES - nVertices + 1)
+                {
+                    // Main Face
+                    Face[] fs = Base.triangulateFace(m.faces[faceIndex]);
+                    foreach (Face f in fs)
+                    {
+                        foreach (int pointIndex in f.pointsIndices)
+                        {
+                            map.Add(pointIndex);
+                            vertexCnt += 1;
+                        }
+                    }
+                    // Opposite Face
+                    Face of = Base.oppositeFace(m.faces[faceIndex]);
+                    fs = Base.triangulateFace(of);
+                    foreach (Face f in fs)
+                    {
+                        foreach (int pointIndex in f.pointsIndices)
+                        {
+                            map.Add(pointIndex);
+                            vertexCnt += 1;
+                        }
+                    }
+                }
+                else
+                {
+                    maps.Add(map.ToArray());
+                    map = new List<int>();
+                    vertexCnt = 0;
+                    // Main Face
+                    Face[] fs = Base.triangulateFace(m.faces[faceIndex]);
+                    foreach (Face f in fs)
+                    {
+                        foreach (int pointIndex in f.pointsIndices)
+                        {
+                            map.Add(pointIndex);
+                            vertexCnt += 1;
+                        }
+                    }
+                    // Opposite Face
+                    Face of = Base.oppositeFace(m.faces[faceIndex]);
+                    fs = Base.triangulateFace(of);
+                    foreach (Face f in fs)
+                    {
+                        foreach (int pointIndex in f.pointsIndices)
+                        {
+                            map.Add(pointIndex);
+                            vertexCnt += 1;
+                        }
+                    }
+                }
+            }
+            if (vertexCnt > 0)
+            {
+                maps.Add(map.ToArray());
+            }
+            return maps.ToArray();
+        };
+
+        /// <summary>
         /// Scimesh Mesh to Unity Mesh by maps from Unity Meshes vertices to Scimesh Mesh points.
         /// </summary>
         public static readonly Func<Mesh, int[][], UnityEngine.Mesh[]> MeshToUMeshesByMaps = (m, maps) =>

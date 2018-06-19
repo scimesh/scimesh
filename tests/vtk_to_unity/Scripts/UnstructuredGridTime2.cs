@@ -9,6 +9,8 @@ namespace Scimesh.Unity
 {
     public class UnstructuredGridTime2 : MonoBehaviour
     {
+        [Tooltip("Any (to avoid serialization conflicts")]
+        public string name;
         public string dirpath;
         public string filename;
         public enum FieldType
@@ -35,7 +37,12 @@ namespace Scimesh.Unity
         public enum MeshFilterType
         {
             BoundaryFaces,
-            AllFaces
+            AllFaces,
+            PlaneFaces,
+            PlaneFacesUserCenter,
+            PlaneCells,
+            PlaneCellsUserCenter,
+            SphereCellsUserCenter
         };
         [Tooltip("Type of Mesh Filter")]
         public MeshFilterType filterType;
@@ -53,7 +60,13 @@ namespace Scimesh.Unity
         }
         Base.MeshFilter mf;
         int[][] maps;
+        public bool twoSided;
         List<GameObject> meshes;
+        public Vector3 planeCenter;
+        public Vector3 planeNormal;
+        public Vector3 sphereCenter;
+        public float sphereRadius;
+        public float SphereRadius { get { return sphereRadius; } set { sphereRadius = value; } }
 
         // Use this for initialization
         void Start()
@@ -212,7 +225,7 @@ namespace Scimesh.Unity
             // Mesh Points
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
             MeshPointData mpd;
-            TextAsset asset = Resources.Load("m_points") as TextAsset;
+            TextAsset asset = Resources.Load("m_points_" + name) as TextAsset;
             long length = 0;
             using (MemoryStream ms = new MemoryStream(asset.bytes))
             {
@@ -226,7 +239,7 @@ namespace Scimesh.Unity
             // Mesh Edges
             stopwatch = System.Diagnostics.Stopwatch.StartNew();
             MeshEdgeData med;
-            asset = Resources.Load("m_edges") as TextAsset;
+            asset = Resources.Load("m_edges_" + name) as TextAsset;
             using (MemoryStream ms = new MemoryStream(asset.bytes))
             {
                 length = ms.Length;
@@ -239,7 +252,7 @@ namespace Scimesh.Unity
             // Mesh Faces
             stopwatch = System.Diagnostics.Stopwatch.StartNew();
             MeshFaceData mfd;
-            asset = Resources.Load("m_faces") as TextAsset;
+            asset = Resources.Load("m_faces_" + name) as TextAsset;
             using (MemoryStream ms = new MemoryStream(asset.bytes))
             {
                 length = ms.Length;
@@ -252,7 +265,7 @@ namespace Scimesh.Unity
             // Mesh Cells
             stopwatch = System.Diagnostics.Stopwatch.StartNew();
             MeshCellData mcd;
-            asset = Resources.Load("m_cells") as TextAsset;
+            asset = Resources.Load("m_cells_" + name) as TextAsset;
             using (MemoryStream ms = new MemoryStream(asset.bytes))
             {
                 length = ms.Length;
@@ -302,7 +315,7 @@ namespace Scimesh.Unity
         public void LoadField3()
         {
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            TextAsset asset = Resources.Load("mpf") as TextAsset;
+            TextAsset asset = Resources.Load("mpf_" + name) as TextAsset;
             long length = 0;
             using (MemoryStream ms = new MemoryStream(asset.bytes))
             {
@@ -318,7 +331,7 @@ namespace Scimesh.Unity
         public void LoadMeshFilter3()
         {
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            TextAsset asset = Resources.Load("mf") as TextAsset;
+            TextAsset asset = Resources.Load("mf_" + name) as TextAsset;
             long length = 0;
             using (MemoryStream ms = new MemoryStream(asset.bytes))
             {
@@ -411,7 +424,7 @@ namespace Scimesh.Unity
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
             MeshPointData mpd = new MeshPointData(m.points);
             using (FileStream fs = new FileStream(Path.Combine(Application.dataPath,
-                "scimesh/tests/vtk_to_unity/Resources/m_points.bytes"), FileMode.Create))
+                "scimesh/tests/vtk_to_unity/Resources/m_points_" + name + ".bytes"), FileMode.Create))
             {
                 BinaryFormatter bf = new BinaryFormatter();
                 bf.Serialize(fs, mpd);
@@ -422,7 +435,7 @@ namespace Scimesh.Unity
             stopwatch = System.Diagnostics.Stopwatch.StartNew();
             MeshEdgeData med = new MeshEdgeData(m.edges);
             using (FileStream fs = new FileStream(Path.Combine(Application.dataPath,
-                "scimesh/tests/vtk_to_unity/Resources/m_edges.bytes"), FileMode.Create))
+                "scimesh/tests/vtk_to_unity/Resources/m_edges_" + name + ".bytes"), FileMode.Create))
             {
                 BinaryFormatter bf = new BinaryFormatter();
                 bf.Serialize(fs, med);
@@ -433,7 +446,7 @@ namespace Scimesh.Unity
             stopwatch = System.Diagnostics.Stopwatch.StartNew();
             MeshFaceData mfd = new MeshFaceData(m.faces);
             using (FileStream fs = new FileStream(Path.Combine(Application.dataPath,
-                "scimesh/tests/vtk_to_unity/Resources/m_faces.bytes"), FileMode.Create))
+                "scimesh/tests/vtk_to_unity/Resources/m_faces_" + name + ".bytes"), FileMode.Create))
             {
                 BinaryFormatter bf = new BinaryFormatter();
                 bf.Serialize(fs, mfd);
@@ -444,7 +457,7 @@ namespace Scimesh.Unity
             stopwatch = System.Diagnostics.Stopwatch.StartNew();
             MeshCellData mcd = new MeshCellData(m.cells);
             using (FileStream fs = new FileStream(Path.Combine(Application.dataPath,
-                "scimesh/tests/vtk_to_unity/Resources/m_cells.bytes"), FileMode.Create))
+                "scimesh/tests/vtk_to_unity/Resources/m_cells_" + name + ".bytes"), FileMode.Create))
             {
                 BinaryFormatter bf = new BinaryFormatter();
                 bf.Serialize(fs, mcd);
@@ -485,7 +498,7 @@ namespace Scimesh.Unity
         {
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
             using (FileStream fs = new FileStream(Path.Combine(Application.dataPath,
-                "scimesh/tests/vtk_to_unity/Resources/mpf.bytes"), FileMode.Create))
+                "scimesh/tests/vtk_to_unity/Resources/mpf_" + name + ".bytes"), FileMode.Create))
             {
                 BinaryFormatter bf = new BinaryFormatter();
                 bf.Serialize(fs, mpf);
@@ -497,7 +510,7 @@ namespace Scimesh.Unity
         {
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
             using (FileStream fs = new FileStream(Path.Combine(Application.dataPath,
-                "scimesh/tests/vtk_to_unity/Resources/mf.bytes"), FileMode.Create))
+                "scimesh/tests/vtk_to_unity/Resources/mf_" + name + ".bytes"), FileMode.Create))
             {
                 BinaryFormatter bf = new BinaryFormatter();
                 bf.Serialize(fs, mf);
@@ -510,6 +523,8 @@ namespace Scimesh.Unity
         {
             Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            float[] center;
+            float[] normal;
             switch (filterType)
             {
                 case MeshFilterType.BoundaryFaces:
@@ -517,6 +532,30 @@ namespace Scimesh.Unity
                     break;
                 case MeshFilterType.AllFaces:
                     mf = Base.To.Base.allFacesMeshFilter(m);
+                    break;
+                case MeshFilterType.PlaneFaces:
+                    center = new float[] { 0, 0, 0 };
+                    normal = new float[] { planeNormal.x, planeNormal.y, planeNormal.z };
+                    mf = Base.To.Base.planeFacesMeshFilter(m, center, normal);
+                    break;
+                case MeshFilterType.PlaneFacesUserCenter:
+                    center = new float[] { planeCenter.x, planeCenter.y, planeCenter.z };
+                    normal = new float[] { planeNormal.x, planeNormal.y, planeNormal.z };
+                    mf = Base.To.Base.planeFacesMeshFilter(m, center, normal);
+                    break;
+                case MeshFilterType.PlaneCells:
+                    center = new float[] { 0, 0, 0 };
+                    normal = new float[] { planeNormal.x, planeNormal.y, planeNormal.z };
+                    mf = Base.To.Base.planeCellsMeshFilter(m, center, normal);
+                    break;
+                case MeshFilterType.PlaneCellsUserCenter:
+                    center = new float[] { planeCenter.x, planeCenter.y, planeCenter.z };
+                    normal = new float[] { planeNormal.x, planeNormal.y, planeNormal.z };
+                    mf = Base.To.Base.planeCellsMeshFilter(m, center, normal);
+                    break;
+                case MeshFilterType.SphereCellsUserCenter:
+                    center = new float[] { sphereCenter.x, sphereCenter.y, sphereCenter.z };
+                    mf = Base.To.Base.sphereCellsMeshFilter(m, center, SphereRadius);
                     break;
                 default:
                     mf = Base.To.Base.boundaryFacesMeshFilter2(m);
@@ -528,7 +567,14 @@ namespace Scimesh.Unity
         {
             Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            maps = Base.To.Unity.UMsVerticesToMPointsMaps(m, mf);
+            if (twoSided)
+            {
+                maps = Base.To.Unity.UMsVerticesToMPointsMapsTwoSided(m, mf);
+            }
+            else
+            {
+                maps = Base.To.Unity.UMsVerticesToMPointsMaps(m, mf);
+            }
             Debug.Log(string.Format("UpdateMaps time: {0} ms, {1} ticks", stopwatch.ElapsedMilliseconds, stopwatch.ElapsedTicks));
         }
         public void UpdateMesh()
