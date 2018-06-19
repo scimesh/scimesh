@@ -1,5 +1,5 @@
 # scimesh
-![scimesh](https://user-images.githubusercontent.com/34418353/40709032-a8df8218-63fd-11e8-84d0-2869f920af8a.png)
+![scimesh](https://user-images.githubusercontent.com/29516906/41609863-6acf8dcc-73f4-11e8-8213-7e3d509e73bc.png)
 
 # To use Activiz library:
 Visual Studio -> Solution Explorer -> Assembly-CSharp -> Add -> Existing Item:
