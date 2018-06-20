@@ -9,8 +9,6 @@ namespace Scimesh.Unity
 {
     public class UnstructuredGridTime2 : MonoBehaviour
     {
-        [Tooltip("Any (to avoid serialization conflicts")]
-        public string name;
         public string dirpath;
         public string filename;
         public enum FieldType
@@ -50,18 +48,12 @@ namespace Scimesh.Unity
         public int FilterType
         {
             get { return (int)filterType; }
-            set
-            {
-                filterType = (MeshFilterType)value;
-                UpdateMeshFilter();
-                UpdateMaps();
-                UpdateMesh();
-                UpdateField();
-            }
+            set{ filterType = (MeshFilterType)value; }
         }
         Base.MeshFilter mf;
         int[][] maps;
         public bool twoSided;
+        public bool TwoSided { get { return twoSided; } set { twoSided = value; } }
         List<GameObject> meshes;
         public Vector3 planeCenter;
         public Vector3 planeNormal;
@@ -575,7 +567,7 @@ namespace Scimesh.Unity
         {
             Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            if (twoSided)
+            if (TwoSided)
             {
                 maps = Base.To.Unity.UMsVerticesToMPointsMapsTwoSided(m, mf);
             }

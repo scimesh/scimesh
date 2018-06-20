@@ -10,7 +10,7 @@ namespace Scimesh.Unity.Google.Daydream
         public UnstructuredGridTime2 ugt;
         // Player
         public CharacterController cc;
-        public Vector3 ccStartPosition;
+        Vector3 ccStartPosition;
         // Menu
         public Canvas menu;
         public Vector3 menuDistance;
@@ -49,10 +49,13 @@ namespace Scimesh.Unity.Google.Daydream
         public int Mode { get { return (int)mode; } set { mode = (MoveMode)value; } }
         public List<Vector3> movePoints;
         public int currentMovePoint;
+        [Tooltip("AppButton holding time for long press recognizing")]
+        public float appButtonLongTime = 1;
+        public float appButtonCnt;
 
         void Start()
         {
-            ResetPosition();
+            ccStartPosition = cc.transform.position;
             currentSpeed = initialSpeed;
             //GvrControllerInput.OnControllerInputUpdated += Respond;
             //GvrControllerInput.OnPostControllerInputUpdated += PostRespond;
@@ -65,52 +68,60 @@ namespace Scimesh.Unity.Google.Daydream
         }
         void Update()
         {
+            // AppButton
+            if (GvrControllerInput.AppButtonDown)
+            {
+                appButtonCnt = 0;
+            }
+            if (GvrControllerInput.AppButton)
+            {
+                appButtonCnt += Time.deltaTime;
+            }
             if (GvrControllerInput.AppButtonUp)
             {
-                // Show/Hide Menu
-                menu.gameObject.SetActive(!menu.gameObject.activeSelf);
-                Quaternion rot = GvrControllerInput.Orientation;
-                Vector3 menuPos = cc.gameObject.transform.position + rot * menuDistance;
-                Quaternion menuRot = rot;
-                menu.gameObject.transform.SetPositionAndRotation(menuPos, menuRot);
-                // On Menu Hide.
-                // If UGT mesh filter type is PlaneFaces or PlaneFacesUserCenter or SphereCellsUserCenter:
-                // update plane normal by Y axis direction of controller,
-                // update plane center by character controller position
-                // update sphere center by character controller position
-                // If Threshold update 
-                if (!menu.gameObject.activeSelf)
+                if (appButtonCnt < appButtonLongTime) // Short Press
                 {
+                    // Show/Hide Menu
+                    menu.gameObject.SetActive(!menu.gameObject.activeSelf);
+                    Quaternion rot = GvrControllerInput.Orientation;
+                    Vector3 menuPos = cc.gameObject.transform.position + rot * menuDistance;
+                    menu.gameObject.transform.SetPositionAndRotation(menuPos, rot);
+                }
+                else // Long Press
+                {
+                    // Update MeshFilters
+                    // If UGT mesh filter type is: 
+                    // PlaneFaces/Cells or PlaneFaces/CellsUserCenter or SphereCellsUserCenter
+                    // Update plane normal by Y axis direction of controller,
+                    // Update plane center by character controller position
+                    // Update sphere center by character controller position
+                    Quaternion rot = GvrControllerInput.Orientation;  
                     switch (ugt.FilterType)
                     {
                         case (int)UnstructuredGridTime2.MeshFilterType.PlaneFaces:
                             ugt.planeNormal = rot * Vector3.up;
-                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.PlaneFaces; // For Auto Update
                             break;
                         case (int)UnstructuredGridTime2.MeshFilterType.PlaneFacesUserCenter:
                             ugt.planeNormal = rot * Vector3.up;
                             ugt.planeCenter = cc.transform.position;
-                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.PlaneFacesUserCenter; // For Auto Update
                             break;
                         case (int)UnstructuredGridTime2.MeshFilterType.PlaneCells:
                             ugt.planeNormal = rot * Vector3.up;
-                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.PlaneCells; // For Auto Update
                             break;
                         case (int)UnstructuredGridTime2.MeshFilterType.PlaneCellsUserCenter:
                             ugt.planeNormal = rot * Vector3.up;
                             ugt.planeCenter = cc.transform.position;
-                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.PlaneCellsUserCenter; // For Auto Update
                             break;
                         case (int)UnstructuredGridTime2.MeshFilterType.SphereCellsUserCenter:
                             ugt.sphereCenter = cc.transform.position;
-                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.SphereCellsUserCenter; // For Auto Update
-                            break;
-                        case (int)UnstructuredGridTime2.MeshFilterType.Threshold:
-                            ugt.FilterType = (int)UnstructuredGridTime2.MeshFilterType.Threshold; // For Auto Update
                             break;
                         default:
                             break;
                     }
+                    ugt.UpdateMeshFilter();
+                    ugt.UpdateMaps();
+                    ugt.UpdateMesh();
+                    ugt.UpdateField();
                 }
             }
             // Move logic
@@ -368,22 +379,22 @@ namespace Scimesh.Unity.Google.Daydream
         //        ugt.UpdateField();
         //    }
         //}
-        void RespondMove()
-        {
-            Debug.Log("Move");
-        }
-        void Respond()
-        {
-            Debug.Log("Respond");
-        }
-        void PostRespond()
-        {
-            Debug.Log("PostRespond");
-        }
-        void StateRespond(GvrConnectionState state, GvrConnectionState oldState)
-        {
-            Debug.Log(string.Format("StateRespond. New: {0}, Old: {1}", state, oldState));
-        }
+        //void RespondMove()
+        //{
+        //    Debug.Log("Move");
+        //}
+        //void Respond()
+        //{
+        //    Debug.Log("Respond");
+        //}
+        //void PostRespond()
+        //{
+        //    Debug.Log("PostRespond");
+        //}
+        //void StateRespond(GvrConnectionState state, GvrConnectionState oldState)
+        //{
+        //    Debug.Log(string.Format("StateRespond. New: {0}, Old: {1}", state, oldState));
+        //}
         //public void SwitchColormap()
         //{
         //    int n = Enum.GetNames(typeof(Color.Colormap.Name)).Length;
