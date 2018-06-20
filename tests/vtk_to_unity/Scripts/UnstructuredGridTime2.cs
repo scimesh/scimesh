@@ -34,6 +34,7 @@ namespace Scimesh.Unity
         Base.MeshPointField mpf;
         public enum MeshFilterType
         {
+            Zero,
             BoundaryFaces,
             AllFaces,
             PlaneFaces,
@@ -524,6 +525,9 @@ namespace Scimesh.Unity
             float[] normal;
             switch (filterType)
             {
+                case MeshFilterType.Zero:
+                    mf = new Base.MeshFilter(new int[0], new int[0], new int[0], new int[0]);
+                    break;
                 case MeshFilterType.BoundaryFaces:
                     mf = Base.To.Base.boundaryFacesMeshFilter2(m);
                     break;
