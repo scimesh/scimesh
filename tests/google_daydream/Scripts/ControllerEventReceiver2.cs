@@ -49,9 +49,10 @@ namespace Scimesh.Unity.Google.Daydream
         public int Mode { get { return (int)mode; } set { mode = (MoveMode)value; } }
         public List<Vector3> movePoints;
         public int currentMovePoint;
-        [Tooltip("AppButton holding time for long press recognizing")]
-        public float appButtonLongTime = 1;
+        [Tooltip("AppButton holding time for long press recognizing (seconds)")]
+        public float appButtonLongTime = 0.5f;
         public float appButtonCnt;
+        public bool appButtonLongFlag;
 
         void Start()
         {
@@ -72,56 +73,61 @@ namespace Scimesh.Unity.Google.Daydream
             if (GvrControllerInput.AppButtonDown)
             {
                 appButtonCnt = 0;
+                appButtonLongFlag = false;
             }
             if (GvrControllerInput.AppButton)
             {
-                appButtonCnt += Time.deltaTime;
+                if (!appButtonLongFlag)
+                {
+                    appButtonCnt += Time.deltaTime;
+                    if (appButtonCnt > appButtonLongTime) // Long Press
+                    {
+                        appButtonLongFlag = true;
+                        // Update MeshFilters
+                        // If UGT mesh filter type is: 
+                        // PlaneFaces/Cells or PlaneFaces/CellsUserCenter or SphereCellsUserCenter
+                        // Update plane normal by Y axis direction of controller,
+                        // Update plane center by character controller position
+                        // Update sphere center by character controller position
+                        Quaternion rot = GvrControllerInput.Orientation;
+                        switch (ugt.FilterType)
+                        {
+                            case (int)UnstructuredGridTime2.MeshFilterType.PlaneFaces:
+                                ugt.planeNormal = rot * Vector3.up;
+                                break;
+                            case (int)UnstructuredGridTime2.MeshFilterType.PlaneFacesUserCenter:
+                                ugt.planeNormal = rot * Vector3.up;
+                                ugt.planeCenter = cc.transform.position;
+                                break;
+                            case (int)UnstructuredGridTime2.MeshFilterType.PlaneCells:
+                                ugt.planeNormal = rot * Vector3.up;
+                                break;
+                            case (int)UnstructuredGridTime2.MeshFilterType.PlaneCellsUserCenter:
+                                ugt.planeNormal = rot * Vector3.up;
+                                ugt.planeCenter = cc.transform.position;
+                                break;
+                            case (int)UnstructuredGridTime2.MeshFilterType.SphereCellsUserCenter:
+                                ugt.sphereCenter = cc.transform.position;
+                                break;
+                            default:
+                                break;
+                        }
+                        ugt.UpdateMeshFilter();
+                        ugt.UpdateMaps();
+                        ugt.UpdateMesh();
+                        ugt.UpdateField();
+                    }
+                }
             }
             if (GvrControllerInput.AppButtonUp)
             {
-                if (appButtonCnt < appButtonLongTime) // Short Press
+                if (!appButtonLongFlag) // Short Press
                 {
                     // Show/Hide Menu
                     menu.gameObject.SetActive(!menu.gameObject.activeSelf);
                     Quaternion rot = GvrControllerInput.Orientation;
                     Vector3 menuPos = cc.gameObject.transform.position + rot * menuDistance;
                     menu.gameObject.transform.SetPositionAndRotation(menuPos, rot);
-                }
-                else // Long Press
-                {
-                    // Update MeshFilters
-                    // If UGT mesh filter type is: 
-                    // PlaneFaces/Cells or PlaneFaces/CellsUserCenter or SphereCellsUserCenter
-                    // Update plane normal by Y axis direction of controller,
-                    // Update plane center by character controller position
-                    // Update sphere center by character controller position
-                    Quaternion rot = GvrControllerInput.Orientation;  
-                    switch (ugt.FilterType)
-                    {
-                        case (int)UnstructuredGridTime2.MeshFilterType.PlaneFaces:
-                            ugt.planeNormal = rot * Vector3.up;
-                            break;
-                        case (int)UnstructuredGridTime2.MeshFilterType.PlaneFacesUserCenter:
-                            ugt.planeNormal = rot * Vector3.up;
-                            ugt.planeCenter = cc.transform.position;
-                            break;
-                        case (int)UnstructuredGridTime2.MeshFilterType.PlaneCells:
-                            ugt.planeNormal = rot * Vector3.up;
-                            break;
-                        case (int)UnstructuredGridTime2.MeshFilterType.PlaneCellsUserCenter:
-                            ugt.planeNormal = rot * Vector3.up;
-                            ugt.planeCenter = cc.transform.position;
-                            break;
-                        case (int)UnstructuredGridTime2.MeshFilterType.SphereCellsUserCenter:
-                            ugt.sphereCenter = cc.transform.position;
-                            break;
-                        default:
-                            break;
-                    }
-                    ugt.UpdateMeshFilter();
-                    ugt.UpdateMaps();
-                    ugt.UpdateMesh();
-                    ugt.UpdateField();
                 }
             }
             // Move logic
